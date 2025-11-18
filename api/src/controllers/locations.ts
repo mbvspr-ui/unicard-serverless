@@ -64,7 +64,7 @@ export const getDistricts = async (req: Request, res: Response): Promise<void> =
       cachedDistricts = locationsData.districts;
     }
 
-    const districts = cachedDistricts[state];
+    const districts = cachedDistricts?.[state];
 
     if (!districts) {
       res.status(404).json({
