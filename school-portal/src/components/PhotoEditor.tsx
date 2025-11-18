@@ -181,8 +181,6 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
       setOriginalImage(img);
       setHasTransparentBg(false);
       resetFilters(false); // Don't show toast when loading new image
-      
-      toast.success('Image loaded successfully');
     } catch (error) {
       console.error('File load error:', error);
       toast.error('Failed to load image');
