@@ -25,6 +25,7 @@ interface LogActivityParams {
  */
 export async function logActivity(params: LogActivityParams): Promise<void> {
   try {
+    console.log('📝 Logging activity:', params.activityType, '-', params.description);
     await insertOne('activity_log', {
       school_id: params.schoolId,
       activity_type: params.activityType,
@@ -33,8 +34,9 @@ export async function logActivity(params: LogActivityParams): Promise<void> {
       description: params.description,
       metadata: params.metadata ? JSON.stringify(params.metadata) : null,
     });
+    console.log('✅ Activity logged successfully');
   } catch (error) {
     // Don't throw errors for activity logging - it's not critical
-    console.error('Failed to log activity:', error);
+    console.error('❌ Failed to log activity:', error);
   }
 }
