@@ -168,7 +168,14 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
     }
 
     try {
+      setIsProcessing(true);
       const img = await loadImageFromFile(file);
+      
+      // If file is large, show compression info
+      if (file.size > 1024 * 1024) {
+        toast.info('Optimizing image size...');
+      }
+      
       setImage(img);
       setOriginalImage(img);
       setHasTransparentBg(false);
@@ -176,6 +183,8 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
     } catch (error) {
       console.error('File load error:', error);
       toast.error('Failed to load image');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -284,7 +293,7 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
     }
   };
 
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     console.log('capturePhoto called');
     console.log('videoRef.current:', videoRef.current);
     console.log('canvasRef.current:', canvasRef.current);
@@ -315,23 +324,27 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
       ctx.drawImage(video, 0, 0);
 
       console.log('Converting to blob...');
-      canvas.toBlob((blob) => {
+      try {
+        const blob = await canvasToBlob(canvas, 'image/jpeg', 0.95);
         console.log('Blob created:', blob);
-        if (blob) {
-          const img = new Image();
-          img.onload = () => {
-            console.log('Image loaded from blob');
-            setImage(img);
-            setOriginalImage(img);
-            stopCamera();
-            toast.success('Photo captured! You can now edit it.');
-          };
-          img.src = URL.createObjectURL(blob);
-        } else {
-          console.error('Blob is null');
-          toast.error('Failed to capture photo. Please try again.');
-        }
-      }, 'image/jpeg', 0.95);
+        
+        // Compress if needed
+        const { compressImageIfNeeded } = await import('../utils/imageProcessing');
+        const compressedBlob = await compressImageIfNeeded(blob);
+        
+        const img = new Image();
+        img.onload = () => {
+          console.log('Image loaded from blob');
+          setImage(img);
+          setOriginalImage(img);
+          stopCamera();
+          toast.success('Photo captured! You can now edit it.');
+        };
+        img.src = URL.createObjectURL(compressedBlob);
+      } catch (error) {
+        console.error('Capture error:', error);
+        toast.error('Failed to capture photo. Please try again.');
+      }
     } else {
       console.error('videoRef or canvasRef is null');
       console.log('videoRef.current:', videoRef.current);
@@ -451,12 +464,24 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
     }
 
     try {
+      setIsProcessing(true);
       const blob = await canvasToBlob(canvasRef.current, 'image/jpeg', 0.9);
-      onSave(blob);
+      
+      // Compress if needed (target: 500KB - 1MB)
+      const { compressImageIfNeeded } = await import('../utils/imageProcessing');
+      const compressedBlob = await compressImageIfNeeded(blob);
+      
+      if (compressedBlob.size !== blob.size) {
+        toast.success(`Photo optimized: ${(compressedBlob.size / 1024).toFixed(0)}KB`);
+      }
+      
+      onSave(compressedBlob);
       onClose();
     } catch (error) {
       console.error('Save error:', error);
       toast.error('Failed to save photo. Please try again.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 

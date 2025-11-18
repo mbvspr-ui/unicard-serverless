@@ -339,3 +339,75 @@ export function loadImageFromFile(file: File): Promise<HTMLImageElement> {
     reader.readAsDataURL(file);
   });
 }
+
+/**
+ * Compress image to target size range (500KB - 1MB)
+ * If image is already under 1MB, returns it as-is
+ * If over 1MB, compresses to between 500KB and 1MB
+ */
+export async function compressImageIfNeeded(
+  blob: Blob,
+  targetMinSize: number = 500 * 1024, // 500KB
+  targetMaxSize: number = 1024 * 1024  // 1MB
+): Promise<Blob> {
+  // If already under max size, return as-is
+  if (blob.size <= targetMaxSize) {
+    console.log(`Image size ${(blob.size / 1024).toFixed(2)}KB - no compression needed`);
+    return blob;
+  }
+
+  console.log(`Image size ${(blob.size / 1024).toFixed(2)}KB - compressing...`);
+
+  // Load image from blob
+  const img = await loadImage(URL.createObjectURL(blob));
+  
+  // Create canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Failed to get canvas context');
+  
+  ctx.drawImage(img, 0, 0);
+
+  // Binary search for optimal quality
+  let minQuality = 0.1;
+  let maxQuality = 0.95;
+  let bestBlob: Blob = blob;
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  while (attempts < maxAttempts && maxQuality - minQuality > 0.05) {
+    const quality = (minQuality + maxQuality) / 2;
+    const testBlob = await canvasToBlob(canvas, 'image/jpeg', quality);
+    
+    console.log(`Attempt ${attempts + 1}: quality=${quality.toFixed(2)}, size=${(testBlob.size / 1024).toFixed(2)}KB`);
+    
+    if (testBlob.size <= targetMaxSize && testBlob.size >= targetMinSize) {
+      // Perfect! Within target range
+      bestBlob = testBlob;
+      console.log(`✓ Found optimal compression: ${(testBlob.size / 1024).toFixed(2)}KB`);
+      break;
+    } else if (testBlob.size > targetMaxSize) {
+      // Too large, reduce quality
+      maxQuality = quality;
+    } else {
+      // Too small, increase quality
+      minQuality = quality;
+      bestBlob = testBlob; // Keep this as best so far
+    }
+    
+    attempts++;
+  }
+
+  // If we couldn't get into range, use the best we found
+  if (bestBlob.size > targetMaxSize) {
+    // One more attempt with lower quality
+    bestBlob = await canvasToBlob(canvas, 'image/jpeg', minQuality);
+  }
+
+  console.log(`Final compressed size: ${(bestBlob.size / 1024).toFixed(2)}KB (${((1 - bestBlob.size / blob.size) * 100).toFixed(1)}% reduction)`);
+  
+  return bestBlob;
+}
