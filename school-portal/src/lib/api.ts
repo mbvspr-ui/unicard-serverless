@@ -170,6 +170,31 @@ export const schoolApi = {
     return fetchWithAuth('/api/schools/profile');
   },
 
+  updateProfile: async (profileData: {
+    name: string;
+    phone: string;
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+    principal_name?: string;
+  }): Promise<ApiResponse<any>> => {
+    return fetchWithAuth('/api/schools/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+  },
+
+  changePassword: async (passwordData: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<ApiResponse<any>> => {
+    return fetchWithAuth('/api/schools/change-password', {
+      method: 'POST',
+      body: JSON.stringify(passwordData),
+    });
+  },
+
   forgotPassword: async (email: string): Promise<ApiResponse<any>> => {
     const response = await fetch(`${API_URL}/api/schools/forgot-password`, {
       method: 'POST',
@@ -179,6 +204,13 @@ export const schoolApi = {
       body: JSON.stringify({ email }),
     });
     return response.json();
+  },
+};
+
+// Activity APIs
+export const activityApi = {
+  getRecent: async (limit: number = 10): Promise<ApiResponse<any[]>> => {
+    return fetchWithAuth(`/api/activities?limit=${limit}`);
   },
 };
 

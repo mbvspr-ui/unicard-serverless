@@ -44,6 +44,7 @@ import studentRoutes from './routes/student.js';
 import batchRoutes from './routes/batch.js';
 import adminRoutes from './routes/admin.js';
 import schoolRoutes from './routes/schools.js';
+import activityRoutes from './routes/activity.js';
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -62,6 +63,7 @@ app.use('/api/students', studentRoutes);
 app.use('/api/batches', batchRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/schools', schoolRoutes);
+app.use('/api/activities', activityRoutes);
 
 // 404 handler
 app.use((req, res) => {

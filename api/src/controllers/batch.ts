@@ -7,6 +7,7 @@ import {
   batchListQuerySchema,
   BatchSubmissionInput,
 } from '../validators/batch.js';
+import { logActivity } from '../utils/activity-logger.js';
 
 /**
  * Create a new batch submission
@@ -141,6 +142,19 @@ export const createBatchSubmission = async (
 
       // Commit transaction
       await query('COMMIT');
+
+      // Log activity
+      await logActivity({
+        schoolId,
+        activityType: 'batch_submitted',
+        entityType: 'batch',
+        entityId: batch.id,
+        description: `Submitted batch with ${studentIds.length} student${studentIds.length > 1 ? 's' : ''}`,
+        metadata: {
+          studentCount: studentIds.length,
+          batchId: batch.id,
+        },
+      });
 
       res.status(201).json({
         success: true,

@@ -3,6 +3,7 @@ import { AuthRequest } from '../types/index.js';
 import { query, updateById } from '../utils/db-helpers.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import { logActivity } from '../utils/activity-logger.js';
 
 /**
  * Update school profile
@@ -45,6 +46,17 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       pincode,
       principal_name,
       updated_at: new Date()
+    });
+
+    // Log activity
+    await logActivity({
+      schoolId,
+      activityType: 'profile_updated',
+      entityType: 'profile',
+      description: 'Updated school profile information',
+      metadata: {
+        updatedFields: ['name', 'phone', 'address', 'city', 'state', 'pincode', 'principal_name'],
+      },
     });
 
     res.json({

@@ -3,6 +3,7 @@ import { AuthRequest } from '../types/index.js';
 import { insertOne, updateById, deleteById, findById, query } from '../utils/db-helpers.js';
 import { studentSchema, studentUpdateSchema, StudentInput } from '../validators/student.js';
 import { cache } from '../utils/cache.js';
+import { logActivity } from '../utils/activity-logger.js';
 
 /**
  * Create a new student
@@ -29,6 +30,20 @@ export const createStudent = async (req: AuthRequest, res: Response): Promise<vo
     cache.clear(`student_count_${schoolId}_all_all_none`);
     cache.clear(`student_count_${schoolId}_${validatedData.class}_all_none`);
     cache.clear(`student_count_${schoolId}_${validatedData.class}_${validatedData.section}_none`);
+
+    // Log activity
+    await logActivity({
+      schoolId,
+      activityType: 'student_added',
+      entityType: 'student',
+      entityId: student.id,
+      description: `Added student: ${validatedData.name}`,
+      metadata: {
+        studentName: validatedData.name,
+        class: validatedData.class,
+        section: validatedData.section,
+      },
+    });
 
     res.status(201).json({
       success: true,
@@ -203,6 +218,19 @@ export const updateStudent = async (req: AuthRequest, res: Response): Promise<vo
     const validatedData = studentUpdateSchema.parse(req.body);
     const updated = await updateById('students', studentId, validatedData);
 
+    // Log activity
+    await logActivity({
+      schoolId: schoolId!,
+      activityType: 'student_updated',
+      entityType: 'student',
+      entityId: studentId,
+      description: `Updated student: ${(updated as any).name || (existing as any).name}`,
+      metadata: {
+        studentName: (updated as any).name || (existing as any).name,
+        updatedFields: Object.keys(validatedData),
+      },
+    });
+
     res.json({
       success: true,
       data: updated,
@@ -241,6 +269,20 @@ export const deleteStudent = async (req: AuthRequest, res: Response): Promise<vo
       });
       return;
     }
+
+    // Log activity before deletion
+    await logActivity({
+      schoolId: schoolId!,
+      activityType: 'student_deleted',
+      entityType: 'student',
+      entityId: studentId,
+      description: `Deleted student: ${(existing as any).name}`,
+      metadata: {
+        studentName: (existing as any).name,
+        class: (existing as any).class,
+        section: (existing as any).section,
+      },
+    });
 
     await deleteById('students', studentId);
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
@@ -6,7 +6,7 @@ import { FormInput } from '../components/ui/form-input';
 import { FormTextarea } from '../components/ui/form-textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, Upload, X, Info } from 'lucide-react';
 
 export const Register = () => {
   const navigate = useNavigate();
@@ -14,6 +14,8 @@ export const Register = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const signatureInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -28,8 +30,57 @@ export const Register = () => {
     principal_name: '',
   });
 
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
+
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSignatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    setSignatureFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSignaturePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleStep1Submit = (e: React.FormEvent) => {
@@ -45,7 +96,12 @@ export const Register = () => {
     setStep(2);
   };
 
-  const handleStep2Submit = async (e: React.FormEvent) => {
+  const handleStep2Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setStep(3);
+  };
+
+  const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -134,7 +190,7 @@ export const Register = () => {
           <div className="text-center pt-2">
             <CardTitle className="text-xl sm:text-2xl">School Registration</CardTitle>
             <CardDescription className="mt-2">
-              Step {step} of 2: {step === 1 ? 'Basic Information' : 'Contact Details'}
+              Step {step} of 3: {step === 1 ? 'Basic Information' : step === 2 ? 'Contact Details' : 'School Assets (Optional)'}
             </CardDescription>
           </div>
         </CardHeader>
@@ -189,7 +245,7 @@ export const Register = () => {
                 </Link>
               </div>
             </form>
-          ) : (
+          ) : step === 2 ? (
             <form onSubmit={handleStep2Submit} className="space-y-4">
               <FormInput
                 label="Principal Name"
@@ -257,6 +313,142 @@ export const Register = () => {
                   type="submit"
                   className="flex-1"
                   size="lg"
+                >
+                  Next Step
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleFinalSubmit} className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-2">
+                  <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-900">
+                    <p className="font-medium mb-1">Why upload these assets?</p>
+                    <ul className="list-disc list-inside space-y-1 text-blue-800">
+                      <li><strong>School Logo:</strong> Will appear on all ID cards</li>
+                      <li><strong>Principal Signature:</strong> Required for official ID card validation</li>
+                    </ul>
+                    <p className="mt-2 text-blue-700">
+                      These are <strong>optional now</strong> - you can upload them later from your profile before submitting batches.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Logo Upload */}
+              <div className="border rounded-lg p-4">
+                <label className="block text-sm font-medium mb-2">
+                  School Logo (Optional)
+                </label>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                  className="hidden"
+                />
+                {logoPreview ? (
+                  <div className="space-y-2">
+                    <img
+                      src={logoPreview}
+                      alt="Logo preview"
+                      className="w-32 h-32 object-contain border rounded-lg"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setLogoFile(null);
+                        setLogoPreview(null);
+                        if (logoInputRef.current) logoInputRef.current.value = '';
+                      }}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => logoInputRef.current?.click()}
+                    className="w-full"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Logo
+                  </Button>
+                )}
+                <p className="text-xs text-gray-500 mt-2">
+                  Recommended: Square image, max 5MB
+                </p>
+              </div>
+
+              {/* Signature Upload */}
+              <div className="border rounded-lg p-4">
+                <label className="block text-sm font-medium mb-2">
+                  Principal Signature (Optional)
+                </label>
+                <input
+                  ref={signatureInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleSignatureChange}
+                  className="hidden"
+                />
+                {signaturePreview ? (
+                  <div className="space-y-2">
+                    <img
+                      src={signaturePreview}
+                      alt="Signature preview"
+                      className="w-48 h-24 object-contain border rounded-lg bg-white"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSignatureFile(null);
+                        setSignaturePreview(null);
+                        if (signatureInputRef.current) signatureInputRef.current.value = '';
+                      }}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => signatureInputRef.current?.click()}
+                    className="w-full"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Signature
+                  </Button>
+                )}
+                <p className="text-xs text-gray-500 mt-2">
+                  Recommended: Transparent background, max 5MB
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep(2)}
+                  className="flex-1"
+                  size="lg"
+                  disabled={loading}
+                >
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  size="lg"
                   disabled={loading}
                 >
                   {loading ? (
@@ -265,7 +457,7 @@ export const Register = () => {
                       Registering...
                     </>
                   ) : (
-                    'Register'
+                    'Complete Registration'
                   )}
                 </Button>
               </div>

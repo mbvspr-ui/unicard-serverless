@@ -137,18 +137,14 @@ export const loginSchool = async (req: Request, res: Response): Promise<void> =>
       email: school.email,
     });
 
+    // Return full school data (excluding sensitive fields)
+    const { password_hash, verification_otp, reset_token, ...schoolData } = school as any;
+    
     res.json({
       success: true,
       token,
-      mustChangePassword: (school as any).must_change_password || false,
-      school: {
-        id: school.id,
-        name: school.name,
-        email: school.email,
-        status: school.status,
-        logo_url: school.logo_url,
-        signature_url: school.signature_url,
-      },
+      mustChangePassword: schoolData.must_change_password || false,
+      school: schoolData,
     });
   } catch (error: any) {
     if (error.name === 'ZodError') {

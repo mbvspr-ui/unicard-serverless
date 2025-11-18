@@ -18,7 +18,7 @@ export default function Profile() {
   const logoInputRef = useRef<HTMLInputElement>(null);
   const signatureInputRef = useRef<HTMLInputElement>(null);
 
-  // Edit mode state
+  // Edit mode state with checkboxes
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editData, setEditData] = useState({
@@ -29,6 +29,15 @@ export default function Profile() {
     state: school?.state || '',
     pincode: school?.pincode || '',
     principal_name: school?.principal_name || '',
+  });
+  const [editFields, setEditFields] = useState({
+    name: false,
+    phone: false,
+    address: false,
+    city: false,
+    state: false,
+    pincode: false,
+    principal_name: false,
   });
 
   // Change password state
@@ -55,6 +64,15 @@ export default function Profile() {
       pincode: school?.pincode || '',
       principal_name: school?.principal_name || '',
     });
+    setEditFields({
+      name: false,
+      phone: false,
+      address: false,
+      city: false,
+      state: false,
+      pincode: false,
+      principal_name: false,
+    });
     setIsEditing(true);
   };
 
@@ -69,18 +87,75 @@ export default function Profile() {
       pincode: school?.pincode || '',
       principal_name: school?.principal_name || '',
     });
+    setEditFields({
+      name: false,
+      phone: false,
+      address: false,
+      city: false,
+      state: false,
+      pincode: false,
+      principal_name: false,
+    });
   };
 
   const handleSaveProfile = async () => {
-    // Validation
-    if (!editData.name || !editData.phone || !editData.address || !editData.city || !editData.state || !editData.pincode) {
-      toast.error('Please fill in all required fields');
+    // Check if at least one field is selected for editing
+    const hasSelectedFields = Object.values(editFields).some(v => v);
+    if (!hasSelectedFields) {
+      toast.error('Please select at least one field to edit');
+      return;
+    }
+
+    // Build update object with only selected fields
+    const updateData: any = {};
+    if (editFields.name) updateData.name = editData.name;
+    if (editFields.phone) updateData.phone = editData.phone;
+    if (editFields.address) updateData.address = editData.address;
+    if (editFields.city) updateData.city = editData.city;
+    if (editFields.state) updateData.state = editData.state;
+    if (editFields.pincode) updateData.pincode = editData.pincode;
+    if (editFields.principal_name) updateData.principal_name = editData.principal_name;
+
+    // Validate required fields if they're being edited
+    if (editFields.name && !updateData.name) {
+      toast.error('School name cannot be empty');
+      return;
+    }
+    if (editFields.phone && !updateData.phone) {
+      toast.error('Phone number cannot be empty');
+      return;
+    }
+    if (editFields.address && !updateData.address) {
+      toast.error('Address cannot be empty');
+      return;
+    }
+    if (editFields.city && !updateData.city) {
+      toast.error('City cannot be empty');
+      return;
+    }
+    if (editFields.state && !updateData.state) {
+      toast.error('State cannot be empty');
+      return;
+    }
+    if (editFields.pincode && !updateData.pincode) {
+      toast.error('Pincode cannot be empty');
       return;
     }
 
     setSaving(true);
     try {
-      const response = await schoolApi.updateProfile(editData);
+      // Merge with current data to send complete profile
+      const completeData = {
+        name: updateData.name || school?.name || '',
+        phone: updateData.phone || school?.phone || '',
+        address: updateData.address || school?.address || '',
+        city: updateData.city || school?.city || '',
+        state: updateData.state || school?.state || '',
+        pincode: updateData.pincode || school?.pincode || '',
+        principal_name: updateData.principal_name !== undefined ? updateData.principal_name : (school?.principal_name || ''),
+      };
+
+      const response = await schoolApi.updateProfile(completeData);
       if (response.success) {
         toast.success('Profile updated successfully!');
         await refreshSchool();
@@ -297,49 +372,138 @@ export default function Profile() {
 
             {isEditing ? (
               <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
-                <FormInput
-                  label="School Name"
-                  value={editData.name}
-                  onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                  required
-                />
-                <FormInput
-                  label="Phone Number"
-                  value={editData.phone}
-                  onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
-                  required
-                />
-                <FormInput
-                  label="Address"
-                  value={editData.address}
-                  onChange={(e) => setEditData({ ...editData, address: e.target.value })}
-                  required
-                />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormInput
-                    label="City"
-                    value={editData.city}
-                    onChange={(e) => setEditData({ ...editData, city: e.target.value })}
-                    required
-                  />
-                  <FormInput
-                    label="State"
-                    value={editData.state}
-                    onChange={(e) => setEditData({ ...editData, state: e.target.value })}
-                    required
-                  />
+                <p className="text-sm text-gray-600 mb-3">
+                  Select the fields you want to edit by checking the boxes:
+                </p>
+                
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={editFields.name}
+                      onChange={(e) => setEditFields({ ...editFields, name: e.target.checked })}
+                      className="mt-2"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="School Name"
+                        value={editData.name}
+                        onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                        disabled={!editFields.name}
+                        required={editFields.name}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={editFields.phone}
+                      onChange={(e) => setEditFields({ ...editFields, phone: e.target.checked })}
+                      className="mt-2"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Phone Number"
+                        value={editData.phone}
+                        onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                        disabled={!editFields.phone}
+                        required={editFields.phone}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={editFields.address}
+                      onChange={(e) => setEditFields({ ...editFields, address: e.target.checked })}
+                      className="mt-2"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Address"
+                        value={editData.address}
+                        onChange={(e) => setEditData({ ...editData, address: e.target.value })}
+                        disabled={!editFields.address}
+                        required={editFields.address}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={editFields.city}
+                        onChange={(e) => setEditFields({ ...editFields, city: e.target.checked })}
+                        className="mt-2"
+                      />
+                      <div className="flex-1">
+                        <FormInput
+                          label="City"
+                          value={editData.city}
+                          onChange={(e) => setEditData({ ...editData, city: e.target.value })}
+                          disabled={!editFields.city}
+                          required={editFields.city}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={editFields.state}
+                        onChange={(e) => setEditFields({ ...editFields, state: e.target.checked })}
+                        className="mt-2"
+                      />
+                      <div className="flex-1">
+                        <FormInput
+                          label="State"
+                          value={editData.state}
+                          onChange={(e) => setEditData({ ...editData, state: e.target.value })}
+                          disabled={!editFields.state}
+                          required={editFields.state}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={editFields.pincode}
+                      onChange={(e) => setEditFields({ ...editFields, pincode: e.target.checked })}
+                      className="mt-2"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Pincode"
+                        value={editData.pincode}
+                        onChange={(e) => setEditData({ ...editData, pincode: e.target.value })}
+                        disabled={!editFields.pincode}
+                        required={editFields.pincode}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={editFields.principal_name}
+                      onChange={(e) => setEditFields({ ...editFields, principal_name: e.target.checked })}
+                      className="mt-2"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Principal Name"
+                        value={editData.principal_name}
+                        onChange={(e) => setEditData({ ...editData, principal_name: e.target.value })}
+                        disabled={!editFields.principal_name}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <FormInput
-                  label="Pincode"
-                  value={editData.pincode}
-                  onChange={(e) => setEditData({ ...editData, pincode: e.target.value })}
-                  required
-                />
-                <FormInput
-                  label="Principal Name"
-                  value={editData.principal_name}
-                  onChange={(e) => setEditData({ ...editData, principal_name: e.target.value })}
-                />
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border rounded-lg p-4">
@@ -400,8 +564,7 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Logo and Signature Upload Section - Only show if assets are missing */}
-          {(!school?.logo_url || !school?.signature_url) && (
+          {/* Logo and Signature Upload Section - Always show */}
           <div className="mb-6 space-y-4">
             <h3 className="font-semibold text-lg">School Assets</h3>
             
@@ -450,11 +613,11 @@ export default function Profile() {
                   />
                 </div>
               )}
-              {!school?.logo_url && (
-                <p className="text-sm text-gray-500 mt-2">
-                  No logo uploaded yet. Required for batch submission.
-                </p>
-              )}
+              <p className="text-sm text-gray-500 mt-2">
+                {school?.logo_url 
+                  ? 'Logo uploaded. You can change it anytime.' 
+                  : 'No logo uploaded yet. Required for batch submission.'}
+              </p>
             </div>
 
             {/* Signature Upload */}
@@ -502,14 +665,13 @@ export default function Profile() {
                   />
                 </div>
               )}
-              {!school?.signature_url && (
-                <p className="text-sm text-gray-500 mt-2">
-                  No signature uploaded yet. Required for batch submission.
-                </p>
-              )}
+              <p className="text-sm text-gray-500 mt-2">
+                {school?.signature_url 
+                  ? 'Signature uploaded. You can change it anytime.' 
+                  : 'No signature uploaded yet. Required for batch submission.'}
+              </p>
             </div>
           </div>
-          )}
 
           {/* Security Section */}
           <div className="mb-6">

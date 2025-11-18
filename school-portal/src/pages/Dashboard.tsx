@@ -6,19 +6,22 @@ import { Card } from '../components/ui/card';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { Header } from '../components/Header';
 import { useAuth } from '../hooks/useAuth';
-import { studentApi, batchApi } from '../lib/api';
+import { studentApi, batchApi, activityApi } from '../lib/api';
 
 interface DashboardStats {
   totalStudents: number;
-  pendingSubmissions: number;
-  completedSubmissions: number;
+  ordersInProgress: number;
+  ordersCompleted: number;
 }
 
 interface RecentActivity {
   id: string;
-  type: 'student_added' | 'batch_submitted';
-  message: string;
-  timestamp: string;
+  activity_type: string;
+  entity_type: string;
+  entity_id: string | null;
+  description: string;
+  metadata: any;
+  created_at: string;
 }
 
 export default function Dashboard() {
@@ -27,8 +30,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalStudents: 0,
-    pendingSubmissions: 0,
-    completedSubmissions: 0,
+    ordersInProgress: 0,
+    ordersCompleted: 0,
   });
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
 
@@ -48,31 +51,25 @@ export default function Dashboard() {
       const batchesResponse = await batchApi.getAll({ page: 1, limit: 100 });
       const batches = Array.isArray(batchesResponse.data) ? batchesResponse.data : [];
       
-      const pendingSubmissions = batches.filter(
+      const ordersInProgress = batches.filter(
         (b: any) => b.status === 'submitted' || b.status === 'processing'
       ).length;
       
-      const completedSubmissions = batches.filter(
+      const ordersCompleted = batches.filter(
         (b: any) => b.status === 'completed'
       ).length;
 
       setStats({
         totalStudents,
-        pendingSubmissions,
-        completedSubmissions,
+        ordersInProgress,
+        ordersCompleted,
       });
 
-      // Create recent activities from batches
-      const activities: RecentActivity[] = batches
-        .slice(0, 5)
-        .map((batch: any) => ({
-          id: batch.id,
-          type: 'batch_submitted' as const,
-          message: `Submitted batch with ${batch.student_count} students`,
-          timestamp: batch.submitted_at,
-        }));
-
-      setRecentActivities(activities);
+      // Fetch recent activities
+      const activitiesResponse = await activityApi.getRecent(10);
+      if (activitiesResponse.success && activitiesResponse.data) {
+        setRecentActivities(activitiesResponse.data);
+      }
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       toast.error('Failed to load dashboard data');
@@ -135,8 +132,8 @@ export default function Dashboard() {
             <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/submissions')}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Pending Submissions</p>
-                  <p className="text-3xl font-bold text-yellow-600">{stats.pendingSubmissions}</p>
+                  <p className="text-sm text-gray-600 mb-1">Orders In Progress</p>
+                  <p className="text-3xl font-bold text-yellow-600">{stats.ordersInProgress}</p>
                 </div>
                 <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                   <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,8 +146,8 @@ export default function Dashboard() {
             <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/submissions')}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Completed</p>
-                  <p className="text-3xl font-bold text-green-600">{stats.completedSubmissions}</p>
+                  <p className="text-sm text-gray-600 mb-1">Orders Completed</p>
+                  <p className="text-3xl font-bold text-green-600">{stats.ordersCompleted}</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,19 +241,78 @@ export default function Dashboard() {
                 <p className="text-sm text-gray-500 text-center py-8">No recent activity</p>
               ) : (
                 <div className="space-y-4">
-                  {recentActivities.map((activity) => (
-                    <div key={activity.id} className="flex gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {recentActivities.map((activity) => {
+                    // Determine icon and color based on activity type
+                    let iconBg = 'bg-blue-100';
+                    let iconColor = 'text-blue-600';
+                    let icon = (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    );
+
+                    if (activity.activity_type === 'student_added') {
+                      iconBg = 'bg-green-100';
+                      iconColor = 'text-green-600';
+                      icon = (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                      );
+                    } else if (activity.activity_type === 'student_updated') {
+                      iconBg = 'bg-yellow-100';
+                      iconColor = 'text-yellow-600';
+                      icon = (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      );
+                    } else if (activity.activity_type === 'student_deleted') {
+                      iconBg = 'bg-red-100';
+                      iconColor = 'text-red-600';
+                      icon = (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      );
+                    } else if (activity.activity_type === 'batch_submitted') {
+                      iconBg = 'bg-purple-100';
+                      iconColor = 'text-purple-600';
+                      icon = (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
+                      );
+                    } else if (activity.activity_type === 'profile_updated') {
+                      iconBg = 'bg-indigo-100';
+                      iconColor = 'text-indigo-600';
+                      icon = (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      );
+                    } else if (activity.activity_type === 'logo_uploaded' || activity.activity_type === 'signature_uploaded') {
+                      iconBg = 'bg-cyan-100';
+                      iconColor = 'text-cyan-600';
+                      icon = (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                      );
+                    }
+
+                    return (
+                      <div key={activity.id} className="flex gap-3">
+                        <div className={`w-8 h-8 ${iconBg} rounded-full flex items-center justify-center flex-shrink-0`}>
+                          <span className={iconColor}>{icon}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900">{activity.description}</p>
+                          <p className="text-xs text-gray-500">{formatDate(activity.created_at)}</p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{activity.message}</p>
-                        <p className="text-xs text-gray-500">{formatDate(activity.timestamp)}</p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </Card>

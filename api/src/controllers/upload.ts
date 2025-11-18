@@ -8,6 +8,7 @@ import {
   validateFileSize,
 } from '../config/storage.js';
 import { executeQueryOne } from '../utils/db-helpers.js';
+import { logActivity } from '../utils/activity-logger.js';
 
 /**
  * Upload school logo
@@ -92,6 +93,18 @@ export const uploadLogo = async (
       });
       return;
     }
+
+    // Log activity
+    await logActivity({
+      schoolId,
+      activityType: 'logo_uploaded',
+      entityType: 'school',
+      description: 'Uploaded school logo',
+      metadata: {
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+      },
+    });
 
     res.status(200).json({
       success: true,
@@ -196,6 +209,18 @@ export const uploadSignature = async (
       });
       return;
     }
+
+    // Log activity
+    await logActivity({
+      schoolId,
+      activityType: 'signature_uploaded',
+      entityType: 'school',
+      description: 'Uploaded principal signature',
+      metadata: {
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+      },
+    });
 
     res.status(200).json({
       success: true,
