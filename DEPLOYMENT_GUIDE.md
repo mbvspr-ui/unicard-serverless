@@ -180,6 +180,8 @@ FRONTEND_URL=https://your-school-portal.vercel.app
 NODE_ENV=production
 ```
 
+**Note:** Email OTP verification is disabled. Schools are auto-approved and can login immediately. SMTP is only used for password reset emails.
+
 ### Step 3: Deploy
 
 Vercel will automatically deploy the serverless functions.
@@ -300,6 +302,8 @@ SMTP_FROM_NAME=
 FRONTEND_URL=
 NODE_ENV=production
 ```
+
+**Note:** SMTP is used for password reset emails only. OTP verification is disabled.
 
 ### Background Removal (.env)
 

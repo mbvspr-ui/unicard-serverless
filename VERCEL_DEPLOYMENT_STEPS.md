@@ -45,6 +45,8 @@ FRONTEND_URL=https://your-school-portal.vercel.app
 NODE_ENV=production
 ```
 
+**Note:** Email OTP verification is disabled. Schools are auto-approved and can login immediately. SMTP is only used for password reset emails.
+
 ### After Deployment:
 - Note the API URL (e.g., `https://unicard-api.vercel.app`)
 - Test health endpoint: `https://your-api-url.vercel.app/api/health`
