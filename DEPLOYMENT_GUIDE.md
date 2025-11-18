@@ -303,7 +303,7 @@ FRONTEND_URL=
 NODE_ENV=production
 ```
 
-**Note:** SMTP is used for password reset emails only. OTP verification is disabled.
+**Note:** SMTP is used for password reset emails only. OTP verification is disabled
 
 ### Background Removal (.env)
 

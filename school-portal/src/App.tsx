@@ -12,6 +12,7 @@ import { SessionExpiryWarning } from './components/SessionExpiryWarning'
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })))
 const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.Register })))
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'))
+const ChangePassword = lazy(() => import('./pages/ChangePassword'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const AddStudent = lazy(() => import('./pages/AddStudent'))
 const StudentList = lazy(() => import('./pages/StudentList'))
@@ -31,8 +32,8 @@ function PageLoader() {
 
 function AppContent() {
   const location = useLocation();
-  const showBottomNav = !['/login', '/register', '/verify-email'].includes(location.pathname);
-  const isProtectedRoute = !['/login', '/register', '/verify-email'].includes(location.pathname);
+  const showBottomNav = !['/login', '/register', '/verify-email', '/change-password'].includes(location.pathname);
+  const isProtectedRoute = !['/login', '/register', '/verify-email', '/change-password'].includes(location.pathname);
 
   return (
     <>
@@ -42,6 +43,7 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/change-password" element={<ChangePassword />} />
         
         {/* Protected Routes */}
         <Route

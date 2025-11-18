@@ -9,7 +9,7 @@ import crypto from 'crypto';
  */
 export const updateProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const schoolId = req.school?.id;
+    const schoolId = req.user?.userId;
     if (!schoolId) {
       return res.status(401).json({
         success: false,
@@ -67,7 +67,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
  */
 export const changePassword = async (req: AuthRequest, res: Response) => {
   try {
-    const schoolId = req.school?.id;
+    const schoolId = req.user?.userId;
     if (!schoolId) {
       return res.status(401).json({
         success: false,
@@ -94,7 +94,7 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
 
     // Get current school data
     const schoolResult = await query(
-      'SELECT password FROM schools WHERE id = $1',
+      'SELECT password_hash FROM schools WHERE id = $1',
       [schoolId]
     );
 
@@ -108,7 +108,7 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     const school = schoolResult.rows[0];
 
     // Verify current password
-    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, school.password);
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, school.password_hash);
     if (!isCurrentPasswordValid) {
       return res.status(400).json({
         success: false,
@@ -119,9 +119,10 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     // Hash new password
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password
+    // Update password and clear must_change_password flag
     await updateById('schools', schoolId, {
-      password: hashedNewPassword,
+      password_hash: hashedNewPassword,
+      must_change_password: false,
       updated_at: new Date()
     });
 
@@ -168,26 +169,37 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     const school = schoolResult.rows[0];
 
-    // Generate reset token (UUID)
-    const resetToken = crypto.randomUUID();
-    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    // Generate temporary password
+    const { generateTemporaryPassword } = await import('../services/email.js');
+    const temporaryPassword = generateTemporaryPassword();
+    
+    // Hash the temporary password
+    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 
-    // Save reset token
+    // Update password in database and set flag to force password change
     await updateById('schools', school.id, {
-      reset_token: resetToken,
-      reset_token_expires: resetTokenExpires,
+      password_hash: hashedPassword,
+      must_change_password: true,
       updated_at: new Date()
     });
 
-    // TODO: Send email with reset link
-    // For now, we'll return the token (in production, this should be sent via email)
-    console.log(`Password reset token for ${email}: ${resetToken}`);
+    // Send temporary password email
+    try {
+      const { sendTemporaryPasswordEmail } = await import('../services/email.js');
+      await sendTemporaryPasswordEmail(school.email, school.name, temporaryPassword);
+    } catch (emailError) {
+      console.error('Failed to send temporary password email:', emailError);
+      return res.status(500).json({
+        success: false,
+        error: { message: 'Failed to send email. Please try again.' }
+      });
+    }
 
     res.json({
       success: true,
-      message: 'Password reset instructions have been sent to your email',
-      // Remove this in production - only for testing
-      resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined
+      message: 'A temporary password has been sent to your email',
+      // Return password in development for testing
+      temporaryPassword: process.env.NODE_ENV === 'development' ? temporaryPassword : undefined
     });
 
   } catch (error) {

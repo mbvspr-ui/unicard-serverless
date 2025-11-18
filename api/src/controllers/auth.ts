@@ -140,6 +140,7 @@ export const loginSchool = async (req: Request, res: Response): Promise<void> =>
     res.json({
       success: true,
       token,
+      mustChangePassword: (school as any).must_change_password || false,
       school: {
         id: school.id,
         name: school.name,

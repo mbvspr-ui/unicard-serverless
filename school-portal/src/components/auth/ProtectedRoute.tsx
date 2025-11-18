@@ -34,5 +34,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
+  // Check if user must change password
+  const mustChangePassword = localStorage.getItem('must_change_password') === 'true';
+  console.log('ProtectedRoute - mustChangePassword:', mustChangePassword, 'pathname:', location.pathname);
+  
+  if (mustChangePassword && location.pathname !== '/change-password') {
+    console.log('Redirecting to change password page');
+    return <Navigate to="/change-password" replace />;
+  }
+
   return <>{children}</>;
 };

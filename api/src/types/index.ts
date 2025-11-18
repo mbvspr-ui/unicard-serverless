@@ -22,6 +22,7 @@ export interface School {
   otp_attempts: number;
   reset_token: string | null;
   reset_token_expires: string | null;
+  must_change_password: boolean;
   created_at: string;
   updated_at: string;
 }

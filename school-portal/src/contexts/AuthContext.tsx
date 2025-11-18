@@ -95,6 +95,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('school_data', JSON.stringify(data.school));
     localStorage.setItem('login_time', loginTime);
     
+    // Store must change password flag
+    console.log('Login response mustChangePassword:', data.mustChangePassword);
+    if (data.mustChangePassword) {
+      localStorage.setItem('must_change_password', 'true');
+      console.log('Set must_change_password flag in localStorage');
+    } else {
+      localStorage.removeItem('must_change_password');
+    }
+    
     setState({ isAuthenticated: true, school: data.school, token: data.token, loading: false });
   };
 
