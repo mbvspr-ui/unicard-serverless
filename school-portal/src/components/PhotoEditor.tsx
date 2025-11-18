@@ -415,6 +415,12 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
     if (!canvasRef.current) return;
 
     setIsRemovingBg(true);
+    
+    // Show informative toast about first-time delay
+    toast.info('Processing... First use may take up to 60 seconds as the service starts up.', {
+      duration: 5000,
+    });
+    
     try {
       const blob = await canvasToBlob(canvasRef.current, 'image/png');
 
@@ -712,26 +718,33 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
                     <RotateCw className="w-4 h-4 mr-2" />
                     Rotate
                   </Button>
-                  <Button
-                    onClick={handleRemoveBackground}
-                    variant="outline"
-                    size="sm"
-                    disabled={isRemovingBg || isCropping}
-                    title="Remove background using AI"
-                    className="min-h-[44px]"
-                  >
-                    {isRemovingBg ? (
-                      <>
-                        <LoadingSpinner className="mr-2" />
-                        Removing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Remove Background
-                      </>
+                  <div className="flex flex-col gap-1">
+                    <Button
+                      onClick={handleRemoveBackground}
+                      variant="outline"
+                      size="sm"
+                      disabled={isRemovingBg || isCropping}
+                      title="Remove background using AI - First use may take up to 60 seconds"
+                      className="min-h-[44px]"
+                    >
+                      {isRemovingBg ? (
+                        <>
+                          <LoadingSpinner className="mr-2" />
+                          Removing...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Remove Background
+                        </>
+                      )}
+                    </Button>
+                    {isRemovingBg && (
+                      <p className="text-xs text-gray-500 text-center">
+                        First use may take up to 60 seconds...
+                      </p>
                     )}
-                  </Button>
+                  </div>
                   <Button
                     onClick={() => {
                       if (fileInputRef.current) {
