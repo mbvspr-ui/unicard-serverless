@@ -14,8 +14,14 @@ testConnection().catch(console.error);
 // Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://school.unicard-serverless.com', 'https://admin.unicard-serverless.com']
-    : ['http://localhost:3000', 'http://localhost:3002'],
+    ? [
+        'https://unicard-serverless.vercel.app',
+        'https://unicard-serverless-h8yr.vercel.app',
+        /^https:\/\/unicard-serverless-.*\.vercel\.app$/,
+        'https://school.unicard-serverless.com',
+        'https://admin.unicard-serverless.com'
+      ]
+    : ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:5173'],
   credentials: true,
 }));
 app.use(express.json());
