@@ -169,6 +169,17 @@ export const schoolApi = {
   getProfile: async (): Promise<ApiResponse<any>> => {
     return fetchWithAuth('/api/schools/profile');
   },
+
+  forgotPassword: async (email: string): Promise<ApiResponse<any>> => {
+    const response = await fetch(`${API_URL}/api/schools/forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+    return response.json();
+  },
 };
 
 // Batch APIs
