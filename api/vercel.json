@@ -7,10 +7,10 @@
       "use": "@vercel/node"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "src/index.ts"
+      "source": "/api/(.*)",
+      "destination": "src/index.ts"
     }
   ],
   "headers": [
@@ -35,15 +35,5 @@
         }
       ]
     }
-  ],
-  "env": {
-    "NODE_ENV": "production",
-    "DATABASE_URL": "@database_url",
-    "JWT_SECRET": "@jwt_secret",
-    "R2_ACCOUNT_ID": "@r2_account_id",
-    "R2_ACCESS_KEY_ID": "@r2_access_key_id",
-    "R2_SECRET_ACCESS_KEY": "@r2_secret_access_key",
-    "R2_BUCKET_NAME": "@r2_bucket_name",
-    "BG_REMOVAL_URL": "@bg_removal_url"
-  }
+  ]
 }
