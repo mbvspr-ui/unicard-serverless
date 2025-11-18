@@ -13,6 +13,9 @@ dotenv.config();
 const { Pool } = pg;
 
 async function runMigration() {
+  // Set environment variable to accept self-signed certificates
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.DATABASE_URL?.includes('localhost') ? false : {
