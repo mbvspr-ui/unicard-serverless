@@ -52,6 +52,7 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user'); // 'user' = front, 'environment' = back
   
   // Loading states
   const [isRemovingBg, setIsRemovingBg] = useState(false);
@@ -208,7 +209,7 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
       
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
-          facingMode: 'user', 
+          facingMode: facingMode, 
           width: { ideal: 1280 }, 
           height: { ideal: 720 } 
         }
@@ -361,6 +362,53 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
     }
     setIsCameraActive(false);
     setIsCameraReady(false);
+  };
+
+  const switchCamera = async () => {
+    // Stop current stream
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    
+    // Toggle facing mode
+    const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(newFacingMode);
+    setIsCameraReady(false);
+    
+    // Restart camera with new facing mode
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          facingMode: newFacingMode, 
+          width: { ideal: 1280 }, 
+          height: { ideal: 720 } 
+        }
+      });
+      
+      setStream(mediaStream);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play()
+            .then(() => {
+              setIsCameraReady(true);
+              toast.success(`Switched to ${newFacingMode === 'user' ? 'front' : 'back'} camera`);
+            })
+            .catch((playError) => {
+              console.error('Video play error:', playError);
+              setIsCameraReady(false);
+              toast.error('Failed to start video playback.');
+            });
+        };
+      }
+    } catch (error: any) {
+      console.error('Camera switch error:', error);
+      toast.error('Failed to switch camera. Please try again.');
+      // Revert facing mode on error
+      setFacingMode(facingMode);
+    }
   };
 
   const handleRemoveBackground = async () => {
@@ -586,7 +634,16 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
                     <Camera className="w-5 h-5 mr-2" />
                     Capture Photo
                   </Button>
-                  <Button onClick={stopCamera} variant="outline" className="h-12">
+                  <Button 
+                    onClick={switchCamera} 
+                    variant="outline" 
+                    className="h-12 px-3"
+                    disabled={!isCameraReady}
+                    title={`Switch to ${facingMode === 'user' ? 'back' : 'front'} camera`}
+                  >
+                    <RotateCw className="w-5 h-5" />
+                  </Button>
+                  <Button onClick={stopCamera} variant="outline" className="h-12 px-3">
                     Cancel
                   </Button>
                 </div>
