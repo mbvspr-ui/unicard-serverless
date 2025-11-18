@@ -1,5 +1,15 @@
 import { Request, Response } from 'express';
-import locationsData from '../data/india-locations.json' assert { type: 'json' };
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load locations data
+const locationsData = JSON.parse(
+  readFileSync(join(__dirname, '../data/india-locations.json'), 'utf-8')
+);
 
 // Cache for location data
 let cachedStates: string[] | null = null;
