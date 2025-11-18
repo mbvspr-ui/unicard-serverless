@@ -93,8 +93,8 @@ export const AdvancedCropOverlay = ({
           />
         </div>
 
-        {/* Instructions and action buttons */}
-        <div className="p-3 sm:p-4 bg-gray-900 border-t border-gray-700 safe-area-bottom">
+        {/* Instructions and action buttons - Above bottom nav on mobile */}
+        <div className="p-3 sm:p-4 bg-gray-900 border-t border-gray-700 pb-20 sm:pb-4">
           <div className="text-center mb-3 sm:mb-4">
             <p className="text-gray-300 text-xs sm:text-sm mb-1">
               <span className="hidden sm:inline">Drag to move • Resize corners to adjust • Choose aspect ratio above</span>
