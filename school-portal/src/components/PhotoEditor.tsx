@@ -169,17 +169,20 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
 
     try {
       setIsProcessing(true);
-      const img = await loadImageFromFile(file);
       
       // If file is large, show compression info
       if (file.size > 1024 * 1024) {
         toast.info('Optimizing image size...');
       }
       
+      const img = await loadImageFromFile(file);
+      
       setImage(img);
       setOriginalImage(img);
       setHasTransparentBg(false);
-      resetFilters();
+      resetFilters(false); // Don't show toast when loading new image
+      
+      toast.success('Image loaded successfully');
     } catch (error) {
       console.error('File load error:', error);
       toast.error('Failed to load image');
@@ -446,7 +449,7 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
     setRotation((prev) => (prev + 90) % 360);
   };
 
-  const resetFilters = () => {
+  const resetFilters = (showToast: boolean = true) => {
     setBrightness(100);
     setContrast(100);
     setSaturation(100);
@@ -454,7 +457,9 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
     setSharpness(100);
     setScale(1);
     setRotation(0);
-    toast.success('Filters reset to defaults');
+    if (showToast) {
+      toast.success('Filters reset to defaults');
+    }
   };
 
   const handleSave = async () => {
@@ -670,10 +675,15 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
                     )}
                   </Button>
                   <Button
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => {
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = ''; // Reset input to allow selecting same file
+                        fileInputRef.current.click();
+                      }
+                    }}
                     variant="outline"
                     size="sm"
-                    disabled={isCropping}
+                    disabled={isCropping || isProcessing}
                     title="Change to a different photo"
                     className="min-h-[44px]"
                   >
@@ -681,10 +691,10 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
                     Change Photo
                   </Button>
                   <Button
-                    onClick={resetFilters}
+                    onClick={() => resetFilters(true)}
                     variant="outline"
                     size="sm"
-                    disabled={isCropping}
+                    disabled={isCropping || isProcessing}
                     title="Reset all filters to default"
                     className="min-h-[44px]"
                   >
