@@ -54,76 +54,67 @@ export const AdvancedCropOverlay = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
-      <div className="h-full flex flex-col">
-        {/* Header with aspect ratio controls */}
-        <div className="p-3 sm:p-4 bg-gray-900 border-b border-gray-700">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h3 className="text-white text-base sm:text-lg font-medium">Crop Photo</h3>
-            <div className="flex gap-2 flex-wrap justify-center sm:justify-end">
-              {aspectRatioPresets.map((preset) => (
-                <Button
-                  key={preset.label}
-                  onClick={() => setCurrentAspectRatio(preset.ratio)}
-                  variant={currentAspectRatio === preset.ratio ? "default" : "outline"}
-                  size="sm"
-                  className="min-w-[70px] sm:min-w-[80px] h-9 text-xs sm:text-sm touch-manipulation"
-                >
-                  {preset.icon}
-                  <span className="ml-1">{preset.label}</span>
-                </Button>
-              ))}
-            </div>
+    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+      {/* Compact Header with aspect ratio controls */}
+      <div className="px-2 py-2 sm:px-4 sm:py-3 bg-gray-900 border-b border-gray-700 flex-shrink-0">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-white text-sm sm:text-base font-medium flex-shrink-0">Crop</h3>
+          <div className="flex gap-1 sm:gap-2">
+            {aspectRatioPresets.map((preset) => (
+              <Button
+                key={preset.label}
+                onClick={() => setCurrentAspectRatio(preset.ratio)}
+                variant={currentAspectRatio === preset.ratio ? "default" : "outline"}
+                size="sm"
+                className="h-8 px-2 sm:px-3 text-xs touch-manipulation"
+              >
+                {preset.icon}
+                <span className="ml-1 hidden sm:inline">{preset.label}</span>
+              </Button>
+            ))}
           </div>
         </div>
+      </div>
 
-        {/* Cropper */}
-        <div className="flex-1 relative touch-none">
-          <Cropper
-            ref={cropperRef}
-            src={image}
-            className="h-full w-full"
-            stencilProps={{
-              aspectRatio: currentAspectRatio,
-              grid: true,
-              movable: true,
-              resizable: true,
-            }}
-            backgroundClassName="bg-black"
-          />
-        </div>
+      {/* Cropper - Takes remaining space */}
+      <div className="flex-1 relative touch-none overflow-hidden">
+        <Cropper
+          ref={cropperRef}
+          src={image}
+          className="h-full w-full"
+          stencilProps={{
+            aspectRatio: currentAspectRatio,
+            grid: true,
+            movable: true,
+            resizable: true,
+          }}
+          backgroundClassName="bg-black"
+        />
+      </div>
 
-        {/* Instructions and action buttons - Above bottom nav on mobile */}
-        <div className="p-3 sm:p-4 bg-gray-900 border-t border-gray-700 pb-20 sm:pb-4">
-          <div className="text-center mb-3 sm:mb-4">
-            <p className="text-gray-300 text-xs sm:text-sm mb-1">
-              <span className="hidden sm:inline">Drag to move • Resize corners to adjust • Choose aspect ratio above</span>
-              <span className="sm:hidden">Drag to move • Pinch to resize</span>
-            </p>
-            <p className="text-gray-400 text-xs hidden sm:block">
-              Perfect for ID photos: Use Square ratio for best results
-            </p>
-          </div>
-          
-          <div className="flex gap-2 sm:gap-3 max-w-md mx-auto">
-            <Button
-              onClick={onCancel}
-              variant="outline"
-              size="lg"
-              className="flex-1 h-11 sm:h-12 text-sm sm:text-base touch-manipulation"
-            >
-              <X className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
-              Cancel
-            </Button>
-            <Button
-              onClick={handleApply}
-              size="lg"
-              className="flex-1 h-11 sm:h-12 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 touch-manipulation"
-            >
-              <Check className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
-              Apply
-            </Button>
-          </div>
+      {/* Compact Footer with buttons - Above bottom nav on mobile */}
+      <div className="px-2 py-2 sm:px-4 sm:py-3 bg-gray-900 border-t border-gray-700 flex-shrink-0 mb-16 sm:mb-0">
+        <p className="text-gray-400 text-xs text-center mb-2">
+          Drag to move • Pinch to resize
+        </p>
+        <div className="flex gap-2 max-w-md mx-auto">
+          <Button
+            onClick={onCancel}
+            variant="outline"
+            size="lg"
+            className="flex-1 h-10 sm:h-11 text-sm touch-manipulation"
+          >
+            <X className="w-4 h-4 mr-1" />
+            Cancel
+          </Button>
+          <Button
+            onClick={handleApply}
+            size="lg"
+            className="flex-1 h-10 sm:h-11 text-sm bg-blue-600 hover:bg-blue-700 touch-manipulation"
+          >
+            <Check className="w-4 h-4 mr-1" />
+            Apply
+          </Button>
         </div>
       </div>
     </div>
