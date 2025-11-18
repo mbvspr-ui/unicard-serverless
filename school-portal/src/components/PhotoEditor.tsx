@@ -622,8 +622,11 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
                 )}
               </div>
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-3">
+                <p className="text-sm text-gray-600 mb-2">
                   Position yourself in the frame and click Capture
+                </p>
+                <p className="text-xs text-blue-600 mb-3">
+                  💡 Tip: Use the flip button (🔄) to switch between front and back camera
                 </p>
                 <div className="flex gap-2">
                   <Button 
