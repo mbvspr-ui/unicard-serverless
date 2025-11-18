@@ -1,0 +1,25 @@
+{
+  "name": "unicard-serverless",
+  "version": "1.0.0",
+  "description": "Serverless ID card management system for schools",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix school-portal && npm install --prefix admin-portal && npm install --prefix api",
+    "dev:school": "npm run dev --prefix school-portal",
+    "dev:admin": "npm run dev --prefix admin-portal",
+    "dev:api": "npm run dev --prefix api",
+    "build:school": "npm run build --prefix school-portal",
+    "build:admin": "npm run build --prefix admin-portal",
+    "build:api": "npm run build --prefix api",
+    "build:all": "npm run build:school && npm run build:admin && npm run build:api"
+  },
+  "keywords": [
+    "id-card",
+    "school-management",
+    "serverless",
+    "react",
+    "typescript"
+  ],
+  "author": "Unicard Team",
+  "license": "PROPRIETARY"
+}
