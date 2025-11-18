@@ -268,7 +268,7 @@ export default function AddStudent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 md:pb-8">
+    <div className="min-h-screen bg-gray-50 pb-32 md:pb-8">
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
@@ -527,8 +527,8 @@ export default function AddStudent() {
               </div>
             </div>
 
-            {/* Submit Button - Sticky on mobile */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-lg z-50 md:relative md:border-0 md:p-0 md:shadow-none">
+            {/* Submit Button - Above bottom nav on mobile */}
+            <div className="fixed bottom-16 left-0 right-0 p-4 bg-white border-t shadow-lg z-40 md:relative md:bottom-0 md:border-0 md:p-0 md:shadow-none">
               <Button
                 type="submit"
                 disabled={loading}
