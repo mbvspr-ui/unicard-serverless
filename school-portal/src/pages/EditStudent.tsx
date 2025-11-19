@@ -443,14 +443,29 @@ export default function EditStudent() {
                       title="Check to edit this field"
                     />
                     <div className="flex-1">
-                      <FormInput
-                        id="date_of_birth"
-                        label="Date of Birth"
-                        type="date"
-                        value={formData.date_of_birth || ''}
-                        onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                        disabled={!selectedFields.has('date_of_birth')}
-                      />
+                      {!selectedFields.has('date_of_birth') && formData.date_of_birth ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Date of Birth
+                          </label>
+                          <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+                            {new Date(formData.date_of_birth).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <FormInput
+                          id="date_of_birth"
+                          label="Date of Birth"
+                          type="date"
+                          value={formData.date_of_birth || ''}
+                          onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                          disabled={!selectedFields.has('date_of_birth')}
+                        />
+                      )}
                     </div>
                   </div>
 
