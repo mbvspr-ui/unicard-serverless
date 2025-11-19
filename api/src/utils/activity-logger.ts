@@ -7,7 +7,9 @@ export type ActivityType =
   | 'batch_submitted'
   | 'profile_updated'
   | 'logo_uploaded'
-  | 'signature_uploaded';
+  | 'signature_uploaded'
+  | 'school_registered'
+  | 'school_login';
 
 export type EntityType = 'student' | 'batch' | 'profile' | 'school';
 
