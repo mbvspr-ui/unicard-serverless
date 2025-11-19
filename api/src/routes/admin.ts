@@ -6,6 +6,11 @@ import {
   updateSchoolStatus,
   getAllBatches,
   getAdminBatchDetails,
+  updateBatchStatus,
+  getAnalytics,
+  getSchoolActivity,
+  getSchoolStudents,
+  getAuditLog,
 } from '../controllers/admin.js';
 import {
   downloadBatchCSV,
@@ -62,5 +67,40 @@ router.get('/batches/:batchId/csv', authenticateAdmin, downloadBatchCSV);
  * @access  Private (Admin)
  */
 router.get('/batches/:batchId/photos', authenticateAdmin, downloadBatchPhotos);
+
+/**
+ * @route   PUT /api/admin/batches/:batchId/status
+ * @desc    Update batch status
+ * @access  Private (Admin)
+ */
+router.put('/batches/:batchId/status', authenticateAdmin, updateBatchStatus);
+
+/**
+ * @route   GET /api/admin/analytics
+ * @desc    Get analytics data
+ * @access  Private (Admin)
+ */
+router.get('/analytics', authenticateAdmin, getAnalytics);
+
+/**
+ * @route   GET /api/admin/schools/:schoolId/activity
+ * @desc    Get school activity log
+ * @access  Private (Admin)
+ */
+router.get('/schools/:schoolId/activity', authenticateAdmin, getSchoolActivity);
+
+/**
+ * @route   GET /api/admin/schools/:schoolId/students
+ * @desc    Get school students
+ * @access  Private (Admin)
+ */
+router.get('/schools/:schoolId/students', authenticateAdmin, getSchoolStudents);
+
+/**
+ * @route   GET /api/admin/audit-log
+ * @desc    Get admin audit log
+ * @access  Private (Admin)
+ */
+router.get('/audit-log', authenticateAdmin, getAuditLog);
 
 export default router;

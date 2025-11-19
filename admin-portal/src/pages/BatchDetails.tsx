@@ -38,8 +38,13 @@ interface Batch {
   school_email?: string;
   school_phone?: string;
   school_address?: string;
+  school_city?: string;
+  school_state?: string;
+  school_pincode?: string;
+  school_principal_name?: string;
   school_logo_url?: string | null;
   school_signature_url?: string | null;
+  school_created_at?: string;
 }
 
 interface BatchDetails {
@@ -55,6 +60,7 @@ export default function BatchDetails() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloadingCSV, setIsDownloadingCSV] = useState(false);
   const [isDownloadingPhotos, setIsDownloadingPhotos] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   useEffect(() => {
     fetchBatchDetails();
@@ -150,6 +156,34 @@ export default function BatchDetails() {
     }
   };
 
+  const handleStatusUpdate = async (newStatus: 'submitted' | 'processing' | 'completed') => {
+    if (!batchDetails) return;
+    
+    setIsUpdatingStatus(true);
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch(`${API_URL}/api/admin/batches/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      toast.success(`Order status updated to ${newStatus === 'submitted' ? 'New' : newStatus === 'processing' ? 'In Progress' : 'Completed'}`);
+      fetchBatchDetails();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update status');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'submitted':
@@ -205,7 +239,7 @@ export default function BatchDetails() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-xl sm:text-2xl font-bold flex-1 truncate">Batch Details</h1>
+            <h1 className="text-xl sm:text-2xl font-bold flex-1 truncate">Order Details</h1>
           </div>
         </div>
       </div>
@@ -216,29 +250,68 @@ export default function BatchDetails() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Batch Status</CardTitle>
+              <CardTitle className="text-lg">Order Status</CardTitle>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(batch.status)}`}>
-                {batch.status}
+                {batch.status === 'submitted' ? 'New Order' : batch.status === 'processing' ? 'In Progress' : 'Completed'}
               </span>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Submitted:</span>
+              <span className="text-muted-foreground">Order Placed:</span>
               <span className="font-medium">{new Date(batch.submitted_at).toLocaleString()}</span>
             </div>
             {batch.processed_at && (
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Processed:</span>
+                <span className="text-muted-foreground">Completed:</span>
                 <span className="font-medium">{new Date(batch.processed_at).toLocaleString()}</span>
               </div>
             )}
             <div className="flex items-center gap-2 text-sm">
               <Users className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Total Students:</span>
+              <span className="text-muted-foreground">Total ID Cards:</span>
               <span className="font-medium">{students.length}</span>
+            </div>
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm">
+              <p className="text-blue-700 dark:text-blue-300">
+                <span className="font-medium">Order ID:</span> {id}
+              </p>
+            </div>
+
+            {/* Status Update Buttons */}
+            <div className="pt-3 border-t">
+              <p className="text-sm font-medium text-muted-foreground mb-3">Update Order Status:</p>
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  variant={batch.status === 'submitted' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleStatusUpdate('submitted')}
+                  disabled={isUpdatingStatus || batch.status === 'submitted'}
+                  className="min-h-[44px]"
+                >
+                  New
+                </Button>
+                <Button
+                  variant={batch.status === 'processing' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleStatusUpdate('processing')}
+                  disabled={isUpdatingStatus || batch.status === 'processing'}
+                  className="min-h-[44px]"
+                >
+                  In Progress
+                </Button>
+                <Button
+                  variant={batch.status === 'completed' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleStatusUpdate('completed')}
+                  disabled={isUpdatingStatus || batch.status === 'completed'}
+                  className="min-h-[44px]"
+                >
+                  Completed
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -251,19 +324,66 @@ export default function BatchDetails() {
               School Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">School Name</p>
-              <p className="text-base">{school.name}</p>
+          <CardContent className="space-y-4">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <p className="text-sm font-medium text-muted-foreground mb-1">School Name</p>
+              <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">{school.name}</p>
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Email</p>
-              <p className="text-base break-all">{school.email}</p>
-            </div>
-            {school.phone && (
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                <p className="text-base">{school.phone}</p>
+                <p className="text-sm font-medium text-muted-foreground">Email</p>
+                <p className="text-base break-all">{school.email}</p>
+              </div>
+              {school.phone && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                  <p className="text-base">{school.phone}</p>
+                </div>
+              )}
+            </div>
+
+            {(batch.school_city || batch.school_state || batch.school_pincode) && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {batch.school_city && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">City</p>
+                    <p className="text-base">{batch.school_city}</p>
+                  </div>
+                )}
+                {batch.school_state && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">State</p>
+                    <p className="text-base">{batch.school_state}</p>
+                  </div>
+                )}
+                {batch.school_pincode && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Pincode</p>
+                    <p className="text-base">{batch.school_pincode}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {batch.school_address && (
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Complete Address</p>
+                <p className="text-base">{batch.school_address}</p>
+              </div>
+            )}
+
+            {batch.school_principal_name && (
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Principal Name</p>
+                <p className="text-base">{batch.school_principal_name}</p>
+              </div>
+            )}
+
+            {batch.school_created_at && (
+              <div className="pt-3 border-t">
+                <p className="text-sm font-medium text-muted-foreground">School Registered</p>
+                <p className="text-base">{new Date(batch.school_created_at).toLocaleDateString()}</p>
               </div>
             )}
           </CardContent>

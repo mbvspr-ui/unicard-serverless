@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Building2, Package, Users, Clock, CheckCircle, XCircle, ArrowRight, RefreshCw } from 'lucide-react';
+import { Building2, Package, Users, Clock, CheckCircle, XCircle, ArrowRight, RefreshCw, TrendingUp } from 'lucide-react';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
 
@@ -130,38 +130,36 @@ export default function Dashboard() {
         {/* School Stats */}
         <div>
           <h2 className="text-lg font-semibold mb-3">School Management</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card
               className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => navigate('/schools?status=pending')}
+              onClick={() => navigate('/schools')}
             >
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  Pending Schools
+                  <Building2 className="w-4 h-4" />
+                  Total Schools
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <p className="text-3xl font-bold text-yellow-600">{stats.pendingSchools}</p>
+                  <p className="text-3xl font-bold text-blue-600">{stats.approvedSchools}</p>
                   <ArrowRight className="w-5 h-5 text-muted-foreground" />
                 </div>
-                {stats.pendingSchools > 0 && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Requires your attention
-                  </p>
-                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  Registered schools
+                </p>
               </CardContent>
             </Card>
 
             <Card
               className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => navigate('/schools?status=approved')}
+              onClick={() => navigate('/schools')}
             >
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  Approved Schools
+                  <Users className="w-4 h-4" />
+                  Active Schools
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -169,32 +167,17 @@ export default function Dashboard() {
                   <p className="text-3xl font-bold text-green-600">{stats.approvedSchools}</p>
                   <ArrowRight className="w-5 h-5 text-muted-foreground" />
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => navigate('/schools?status=rejected')}
-            >
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <XCircle className="w-4 h-4" />
-                  Rejected Schools
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <p className="text-3xl font-bold text-red-600">{stats.rejectedSchools}</p>
-                  <ArrowRight className="w-5 h-5 text-muted-foreground" />
-                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  With student data
+                </p>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Batch Stats */}
+        {/* ID Card Orders Stats */}
         <div>
-          <h2 className="text-lg font-semibold mb-3">Batch Submissions</h2>
+          <h2 className="text-lg font-semibold mb-3">ID Card Orders</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card
               className="cursor-pointer hover:shadow-lg transition-shadow"
@@ -203,7 +186,7 @@ export default function Dashboard() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <Package className="w-4 h-4" />
-                  Submitted
+                  New Orders
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -211,6 +194,11 @@ export default function Dashboard() {
                   <p className="text-3xl font-bold text-blue-600">{stats.submittedBatches}</p>
                   <ArrowRight className="w-5 h-5 text-muted-foreground" />
                 </div>
+                {stats.submittedBatches > 0 && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Ready to process
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -221,7 +209,7 @@ export default function Dashboard() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   <Clock className="w-4 h-4" />
-                  Processing
+                  In Progress
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -229,6 +217,11 @@ export default function Dashboard() {
                   <p className="text-3xl font-bold text-yellow-600">{stats.processingBatches}</p>
                   <ArrowRight className="w-5 h-5 text-muted-foreground" />
                 </div>
+                {stats.processingBatches > 0 && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Being processed
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -247,6 +240,11 @@ export default function Dashboard() {
                   <p className="text-3xl font-bold text-green-600">{stats.completedBatches}</p>
                   <ArrowRight className="w-5 h-5 text-muted-foreground" />
                 </div>
+                {stats.completedBatches > 0 && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Ready for delivery
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -255,7 +253,20 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <div>
           <h2 className="text-lg font-semibold mb-3">Quick Actions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => navigate('/analytics')}
+              className="h-auto py-4 justify-start"
+            >
+              <TrendingUp className="w-5 h-5 mr-3" />
+              <div className="text-left">
+                <p className="font-semibold">View Analytics</p>
+                <p className="text-xs text-muted-foreground">Charts and insights</p>
+              </div>
+            </Button>
+
             <Button
               variant="outline"
               size="lg"
@@ -265,7 +276,7 @@ export default function Dashboard() {
               <Building2 className="w-5 h-5 mr-3" />
               <div className="text-left">
                 <p className="font-semibold">Manage Schools</p>
-                <p className="text-xs text-muted-foreground">Review and approve registrations</p>
+                <p className="text-xs text-muted-foreground">View all registered schools</p>
               </div>
             </Button>
 
@@ -277,19 +288,32 @@ export default function Dashboard() {
             >
               <Package className="w-5 h-5 mr-3" />
               <div className="text-left">
-                <p className="font-semibold">View Batches</p>
+                <p className="font-semibold">View ID Card Orders</p>
                 <p className="text-xs text-muted-foreground">Download student data and photos</p>
+              </div>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => navigate('/audit-log')}
+              className="h-auto py-4 justify-start"
+            >
+              <CheckCircle className="w-5 h-5 mr-3" />
+              <div className="text-left">
+                <p className="font-semibold">Audit Log</p>
+                <p className="text-xs text-muted-foreground">Security and compliance</p>
               </div>
             </Button>
           </div>
         </div>
 
-        {/* Recent Submissions */}
+        {/* Recent Orders */}
         {recentBatches.length > 0 && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Recent Submissions</CardTitle>
+                <CardTitle className="text-lg">Recent ID Card Orders</CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -324,7 +348,7 @@ export default function Dashboard() {
                           : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                       }`}
                     >
-                      {batch.status}
+                      {batch.status === 'submitted' ? 'New' : batch.status === 'processing' ? 'In Progress' : 'Completed'}
                     </span>
                   </div>
                 ))}

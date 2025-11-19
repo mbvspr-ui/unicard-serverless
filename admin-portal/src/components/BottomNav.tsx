@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Building2, Package, LogOut } from 'lucide-react';
+import { LayoutDashboard, Building2, Package, BarChart3, LogOut } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { toast } from 'sonner';
 
@@ -21,13 +21,18 @@ export default function BottomNav() {
       path: '/dashboard',
     },
     {
+      icon: BarChart3,
+      label: 'Analytics',
+      path: '/analytics',
+    },
+    {
       icon: Building2,
       label: 'Schools',
       path: '/schools',
     },
     {
       icon: Package,
-      label: 'Batches',
+      label: 'Orders',
       path: '/batches',
     },
     {

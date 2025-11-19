@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Search, Eye, RefreshCw, Calendar, Building2, Users } from 'lucide-react';
+import { Search, Eye, RefreshCw, Calendar, Building2, Users, ArrowLeft } from 'lucide-react';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
 
@@ -104,8 +104,16 @@ export default function BatchList() {
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b sticky top-0 z-10">
         <div className="px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl sm:text-2xl font-bold">Batch Submissions</h1>
+          <div className="flex items-center gap-3 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="min-h-[44px] min-w-[44px]"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-xl sm:text-2xl font-bold flex-1">ID Card Orders</h1>
             <Button
               variant="outline"
               size="sm"
@@ -122,7 +130,7 @@ export default function BatchList() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <Input
               type="text"
-              placeholder="Search by school or batch ID..."
+              placeholder="Search by school or order ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12"
@@ -131,23 +139,28 @@ export default function BatchList() {
 
           {/* Status Filter */}
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {['all', 'submitted', 'processing', 'completed'].map((status) => (
+            {[
+              { value: 'all', label: 'All Orders' },
+              { value: 'submitted', label: 'New' },
+              { value: 'processing', label: 'In Progress' },
+              { value: 'completed', label: 'Completed' }
+            ].map(({ value, label }) => (
               <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
+                key={value}
+                onClick={() => setStatusFilter(value)}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors min-h-[44px] ${
-                  statusFilter === status
+                  statusFilter === value
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                 }`}
               >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-                {status !== 'all' && (
+                {label}
+                {value !== 'all' && (
                   <span className="ml-1">
-                    ({batches.filter((b) => b.status === status).length})
+                    ({batches.filter((b) => b.status === value).length})
                   </span>
                 )}
-                {status === 'all' && <span className="ml-1">({batches.length})</span>}
+                {value === 'all' && <span className="ml-1">({batches.length})</span>}
               </button>
             ))}
           </div>
@@ -165,10 +178,10 @@ export default function BatchList() {
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">
                 {searchQuery
-                  ? 'No batches found matching your search'
+                  ? 'No orders found matching your search'
                   : statusFilter !== 'all'
-                  ? `No ${statusFilter} batches`
-                  : 'No batch submissions yet'}
+                  ? `No ${statusFilter === 'submitted' ? 'new' : statusFilter === 'processing' ? 'in progress' : statusFilter} orders`
+                  : 'No ID card orders yet'}
               </p>
             </CardContent>
           </Card>
@@ -182,7 +195,7 @@ export default function BatchList() {
                       {batch.school_name}
                     </CardTitle>
                     <p className="text-xs text-muted-foreground mt-1 truncate">
-                      Batch ID: {batch.id.slice(0, 8)}...
+                      Order ID: {batch.id.slice(0, 8)}...
                     </p>
                   </div>
                   <span
@@ -190,7 +203,7 @@ export default function BatchList() {
                       batch.status
                     )}`}
                   >
-                    {batch.status}
+                    {batch.status === 'submitted' ? 'New' : batch.status === 'processing' ? 'In Progress' : 'Completed'}
                   </span>
                 </div>
               </CardHeader>

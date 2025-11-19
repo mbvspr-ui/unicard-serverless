@@ -1,20 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Shield } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAdminAuth();
+  const { login, isAuthenticated } = useAdminAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,9 +36,9 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      await login(email, password, rememberMe);
       toast.success('Login successful!');
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (error: any) {
       toast.error(error.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -42,13 +51,15 @@ export default function Login() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-              <LogIn className="w-8 h-8 text-white" />
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg p-3">
+              <img src="/unicraft-logo.svg" alt="Unicraft" className="w-full h-full" />
             </div>
           </div>
-          <CardTitle className="text-2xl sm:text-3xl font-bold">Admin Portal</CardTitle>
+          <CardTitle className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Unicraft
+          </CardTitle>
           <CardDescription className="text-sm sm:text-base">
-            Sign in to manage schools and submissions
+            Admin Portal - Manage schools and ID card orders
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -101,6 +112,21 @@ export default function Login() {
               </div>
             </div>
 
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="remember"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                disabled={isLoading}
+              />
+              <Label
+                htmlFor="remember"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Remember me for 8 hours
+              </Label>
+            </div>
+
             <Button
               type="submit"
               className="w-full h-12 text-base font-semibold"
@@ -120,8 +146,12 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-xs sm:text-sm text-muted-foreground">
+          <div className="mt-6 space-y-3">
+            <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground">
+              <Shield className="w-4 h-4" />
+              <p>Secure admin access with session management</p>
+            </div>
+            <p className="text-xs text-center text-muted-foreground">
               Admin access only. Unauthorized access is prohibited.
             </p>
           </div>

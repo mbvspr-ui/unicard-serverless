@@ -3,15 +3,20 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { Toaster } from 'sonner'
 import { AdminAuthProvider } from './contexts/AdminAuthContext'
 import { AdminProtectedRoute } from './components/auth/AdminProtectedRoute'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import BottomNav from './components/BottomNav'
+import Header from './components/Header'
+import SessionExpiryWarning from './components/SessionExpiryWarning'
 
 // Lazy load pages for better performance
 const Login = lazy(() => import('./pages/Login'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Analytics = lazy(() => import('./pages/Analytics'))
 const SchoolList = lazy(() => import('./pages/SchoolList'))
 const SchoolDetails = lazy(() => import('./pages/SchoolDetails'))
 const BatchList = lazy(() => import('./pages/BatchList'))
 const BatchDetails = lazy(() => import('./pages/BatchDetails'))
+const AuditLog = lazy(() => import('./pages/AuditLog'))
 
 // Loading fallback component
 function PageLoader() {
@@ -24,43 +29,57 @@ function PageLoader() {
 
 function AppContent() {
   const location = useLocation();
-  const showBottomNav = location.pathname !== '/login';
+  const showNav = location.pathname !== '/login';
 
   return (
     <>
-      <div className="min-h-screen bg-background pb-16 md:pb-0">
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/schools" element={
-              <AdminProtectedRoute>
-                <SchoolList />
-              </AdminProtectedRoute>
-            } />
-            <Route path="/schools/:id" element={
-              <AdminProtectedRoute>
-                <SchoolDetails />
-              </AdminProtectedRoute>
-            } />
-            <Route path="/batches" element={
-              <AdminProtectedRoute>
-                <BatchList />
-              </AdminProtectedRoute>
-            } />
-            <Route path="/batches/:id" element={
-              <AdminProtectedRoute>
-                <BatchDetails />
-              </AdminProtectedRoute>
-            } />
-            <Route path="/dashboard" element={
-              <AdminProtectedRoute>
-                <Dashboard />
-              </AdminProtectedRoute>
-            } />
-          </Routes>
-        </Suspense>
-        {showBottomNav && <BottomNav />}
+      <div className="min-h-screen bg-background">
+        {showNav && <Header />}
+        <div className="pb-16 md:pb-0">
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/schools" element={
+                <AdminProtectedRoute>
+                  <SchoolList />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/schools/:id" element={
+                <AdminProtectedRoute>
+                  <SchoolDetails />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/batches" element={
+                <AdminProtectedRoute>
+                  <BatchList />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/batches/:id" element={
+                <AdminProtectedRoute>
+                  <BatchDetails />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/dashboard" element={
+                <AdminProtectedRoute>
+                  <Dashboard />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/analytics" element={
+                <AdminProtectedRoute>
+                  <Analytics />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/audit-log" element={
+                <AdminProtectedRoute>
+                  <AuditLog />
+                </AdminProtectedRoute>
+              } />
+            </Routes>
+          </Suspense>
+        </div>
+        {showNav && <BottomNav />}
+        <SessionExpiryWarning />
       </div>
       <Toaster position="top-center" richColors />
     </>
@@ -69,11 +88,13 @@ function AppContent() {
 
 function App() {
   return (
-    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <AdminAuthProvider>
-        <AppContent />
-      </AdminAuthProvider>
-    </Router>
+    <ErrorBoundary>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AdminAuthProvider>
+          <AppContent />
+        </AdminAuthProvider>
+      </Router>
+    </ErrorBoundary>
   );
 }
 
