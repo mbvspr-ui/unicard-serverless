@@ -100,11 +100,11 @@ export const Header = ({ title, showBack = false, showHome = false }: HeaderProp
                     <span className="font-semibold text-gray-900">{school.name}</span>
                   </div>
                   
-                  <div className="flex items-center gap-3 text-xs text-gray-600">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-gray-600">
                     {school.email && (
                       <div className="flex items-center gap-1">
                         <Mail className="w-3 h-3" />
-                        <span className="hidden sm:inline">{school.email}</span>
+                        <span className="truncate max-w-[150px] sm:max-w-none">{school.email}</span>
                       </div>
                     )}
                     {school.phone && (
@@ -114,9 +114,9 @@ export const Header = ({ title, showBack = false, showHome = false }: HeaderProp
                       </div>
                     )}
                     {school.address && (
-                      <div className="flex items-center gap-1 max-w-xs truncate">
+                      <div className="flex items-center gap-1 max-w-[200px] sm:max-w-xs">
                         <MapPin className="w-3 h-3 flex-shrink-0" />
-                        <span className="hidden lg:inline truncate">{school.address}</span>
+                        <span className="truncate">{school.address}</span>
                       </div>
                     )}
                   </div>
