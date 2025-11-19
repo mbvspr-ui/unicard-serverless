@@ -116,8 +116,23 @@ export const downloadBatchCSV = async (
       ],
     });
 
+    // Format data for CSV
+    const formattedStudents = students.map(student => ({
+      ...student,
+      // Format date as DD/MM/YYYY
+      date_of_birth: student.date_of_birth 
+        ? new Date(student.date_of_birth).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          })
+        : '',
+      // Format phone number as text to prevent scientific notation
+      phone_number: student.phone_number ? `'${student.phone_number}` : '',
+    }));
+
     // Write CSV
-    await csvWriter.writeRecords(students);
+    await csvWriter.writeRecords(formattedStudents);
 
     // Set response headers
     res.setHeader('Content-Type', 'text/csv');
