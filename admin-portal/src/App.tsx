@@ -6,6 +6,7 @@ import { AdminProtectedRoute } from './components/auth/AdminProtectedRoute'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import BottomNav from './components/BottomNav'
 import Header from './components/Header'
+import MobileHeader from './components/MobileHeader'
 import SessionExpiryWarning from './components/SessionExpiryWarning'
 
 // Lazy load pages for better performance
@@ -34,7 +35,12 @@ function AppContent() {
   return (
     <>
       <div className="min-h-screen bg-background">
-        {showNav && <Header />}
+        {showNav && (
+          <>
+            <Header />
+            <MobileHeader />
+          </>
+        )}
         <div className="pb-16 md:pb-0">
           <Suspense fallback={<PageLoader />}>
             <Routes>
