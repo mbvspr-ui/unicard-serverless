@@ -12,7 +12,7 @@ const SMTP_CONFIG = {
 };
 
 const FROM_EMAIL = process.env.SMTP_FROM || 'otpsender77@gmail.com';
-const FROM_NAME = process.env.SMTP_FROM_NAME || 'UniCraft Solutions';
+const FROM_NAME = process.env.SMTP_FROM_NAME || 'Samiul Graphics';
 
 // Create transporter
 const transporter = createTransport(SMTP_CONFIG);
@@ -44,7 +44,7 @@ export const sendVerificationOTP = async (
   const mailOptions = {
     from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
     to: email,
-    subject: 'Verify Your Email - UniCraft School Portal',
+    subject: 'Verify Your Email - Samiul Graphics School Portal',
     html: `
       <!DOCTYPE html>
       <html>
@@ -126,13 +126,13 @@ export const sendVerificationOTP = async (
         <div class="container">
           <div class="content">
             <div class="logo">
-              <h1>🎓 UniCraft</h1>
+              <h1>🎓 Samiul Graphics</h1>
               <p style="color: #6c757d; margin: 0;">School Portal</p>
             </div>
             
             <h2 style="color: #333; margin-top: 0;">Welcome, ${schoolName}!</h2>
             
-            <p>Thank you for registering with UniCraft School Portal. To complete your registration, please verify your email address using the OTP below:</p>
+            <p>Thank you for registering with Samiul Graphics School Portal. To complete your registration, please verify your email address using the OTP below:</p>
             
             <div class="otp-box">
               <p style="margin: 0; color: #6c757d; font-size: 14px;">Your Verification Code</p>
@@ -154,7 +154,7 @@ export const sendVerificationOTP = async (
             <p style="margin-top: 30px;">If you have any questions or need assistance, please contact our support team.</p>
             
             <div class="footer">
-              <p><strong>UniCraft Solutions</strong></p>
+              <p><strong>Samiul Graphics</strong></p>
               <p>Simplifying School ID Card Management</p>
               <p style="font-size: 12px; color: #adb5bd;">
                 This is an automated email. Please do not reply to this message.
@@ -166,11 +166,11 @@ export const sendVerificationOTP = async (
       </html>
     `,
     text: `
-Welcome to UniCraft School Portal!
+Welcome to Samiul Graphics School Portal!
 
 Hello ${schoolName},
 
-Thank you for registering with UniCraft. To complete your registration, please verify your email address using the OTP below:
+Thank you for registering with Samiul Graphics. To complete your registration, please verify your email address using the OTP below:
 
 Your Verification Code: ${otp}
 
@@ -184,7 +184,7 @@ Security Notice:
 - If you didn't request this, please ignore this email
 
 Best regards,
-UniCraft Solutions Team
+Samiul Graphics Team
     `,
   };
 
@@ -211,7 +211,7 @@ export const sendTemporaryPasswordEmail = async (
   const mailOptions = {
     from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
     to: email,
-    subject: 'Your Temporary Password - UniCraft School Portal',
+    subject: 'Your Temporary Password - Samiul Graphics School Portal',
     html: `
       <!DOCTYPE html>
       <html>
@@ -272,7 +272,7 @@ export const sendTemporaryPasswordEmail = async (
         <div class="container">
           <div class="content">
             <div class="logo">
-              <h1>🎓 UniCraft</h1>
+              <h1>🎓 Samiul Graphics</h1>
               <p style="color: #6c757d; text-align: center; margin: 0;">School Portal</p>
             </div>
             
@@ -308,7 +308,7 @@ export const sendTemporaryPasswordEmail = async (
             </div>
             
             <div class="footer">
-              <p><strong>UniCraft Solutions</strong></p>
+              <p><strong>Samiul Graphics</strong></p>
               <p>Simplifying School ID Card Management</p>
               <p style="font-size: 12px; color: #adb5bd;">
                 This is an automated email. Please do not reply to this message.
@@ -320,7 +320,7 @@ export const sendTemporaryPasswordEmail = async (
       </html>
     `,
     text: `
-Your Temporary Password - UniCraft School Portal
+Your Temporary Password - Samiul Graphics School Portal
 
 Hello ${schoolName},
 
@@ -340,7 +340,7 @@ Security Notice:
 - If you didn't request this, please contact support
 
 Best regards,
-UniCraft Solutions Team
+Samiul Graphics Team
     `,
   };
 
@@ -386,7 +386,7 @@ export const sendWelcomeEmail = async (
   const mailOptions = {
     from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
     to: email,
-    subject: 'Welcome to UniCraft School Portal! 🎉',
+    subject: 'Welcome to Samiul Graphics School Portal! 🎉',
     html: `
       <!DOCTYPE html>
       <html>
@@ -448,7 +448,7 @@ export const sendWelcomeEmail = async (
         <div class="container">
           <div class="content">
             <div class="logo">
-              <h1>🎓 UniCraft</h1>
+              <h1>🎓 Samiul Graphics</h1>
               <p style="color: #6c757d; text-align: center; margin: 0;">School Portal</p>
             </div>
             
@@ -456,7 +456,7 @@ export const sendWelcomeEmail = async (
             
             <p>Congratulations! Your email has been successfully verified and your account is now active.</p>
             
-            <p>You can now access all features of the UniCraft School Portal:</p>
+            <p>You can now access all features of the Samiul Graphics School Portal:</p>
             
             <div class="feature-box">
               <strong>✨ What you can do:</strong>
@@ -478,7 +478,7 @@ export const sendWelcomeEmail = async (
             <p style="margin-top: 30px;">If you need any help getting started, our support team is here to assist you.</p>
             
             <div class="footer">
-              <p><strong>UniCraft Solutions</strong></p>
+              <p><strong>Samiul Graphics</strong></p>
               <p>Simplifying School ID Card Management</p>
             </div>
           </div>
@@ -487,13 +487,13 @@ export const sendWelcomeEmail = async (
       </html>
     `,
     text: `
-Welcome to UniCraft School Portal!
+Welcome to Samiul Graphics School Portal!
 
 Hello ${schoolName},
 
 Congratulations! Your email has been successfully verified and your account is now active.
 
-You can now access all features of the UniCraft School Portal:
+You can now access all features of the Samiul Graphics School Portal:
 - Add and manage student records
 - Upload student photos
 - Submit batch requests for ID cards
@@ -503,7 +503,7 @@ You can now access all features of the UniCraft School Portal:
 Login to your dashboard: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/login
 
 Best regards,
-UniCraft Solutions Team
+Samiul Graphics Team
     `,
   };
 

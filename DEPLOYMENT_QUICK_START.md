@@ -86,7 +86,7 @@ git push -u origin main
   SMTP_USER=your_brevo_user
   SMTP_PASS=your_brevo_pass
   SMTP_FROM=your-email@example.com
-  SMTP_FROM_NAME=UniCraft Solutions
+  SMTP_FROM_NAME=Samiul Graphics
   FRONTEND_URL=https://your-school-portal.vercel.app
   NODE_ENV=production
   ```

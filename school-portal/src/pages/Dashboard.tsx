@@ -116,7 +116,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-8">
-      {/* Header with UniCraft Branding */}
+      {/* Header with Samiul Graphics Branding */}
       <Header title="Dashboard" />
       
       {/* Main Content */}

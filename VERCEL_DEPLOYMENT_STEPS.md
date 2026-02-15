@@ -40,7 +40,7 @@ EMAIL_SECURE=false
 SMTP_USER=your_brevo_login
 SMTP_PASS=your_brevo_password
 SMTP_FROM=noreply@yourdomain.com
-SMTP_FROM_NAME=UniCraft Solutions
+SMTP_FROM_NAME=Samiul Graphics
 FRONTEND_URL=https://your-school-portal.vercel.app
 NODE_ENV=production
 ```

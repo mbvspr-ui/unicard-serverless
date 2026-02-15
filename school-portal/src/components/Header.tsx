@@ -28,21 +28,21 @@ export const Header = ({ title, showBack = false, showHome = false }: HeaderProp
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            {/* Left Section - UniCraft Branding */}
+            {/* Left Section - Samiul Graphics Branding */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden">
                 <img 
-                  src="/unicraft-logo.png" 
-                  alt="UniCraft" 
+                  src="/samiul-graphics-logo.png" 
+                  alt="Samiul Graphics" 
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     // Fallback to SVG logo
-                    e.currentTarget.src = '/unicraft-logo.svg';
+                    e.currentTarget.src = '/samiul-graphics-logo.svg';
                   }}
                 />
               </div>
               <div>
-                <h1 className="text-lg font-bold">UniCraft</h1>
+                <h1 className="text-lg font-bold">Samiul Graphics</h1>
                 <p className="text-xs text-blue-100">School Portal</p>
               </div>
             </div>

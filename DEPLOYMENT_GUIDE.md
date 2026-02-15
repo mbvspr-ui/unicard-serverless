@@ -175,7 +175,7 @@ EMAIL_SECURE=false
 SMTP_USER=your_brevo_smtp_user
 SMTP_PASS=your_brevo_smtp_password
 SMTP_FROM=your-email@example.com
-SMTP_FROM_NAME=UniCraft Solutions
+SMTP_FROM_NAME=Samiul Graphics
 FRONTEND_URL=https://your-school-portal.vercel.app
 NODE_ENV=production
 ```

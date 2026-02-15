@@ -52,11 +52,11 @@ export default function Login() {
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg p-3">
-              <img src="/unicraft-logo.svg" alt="Unicraft" className="w-full h-full" />
+              <img src="/samiul-graphics-logo.svg" alt="Samiul Graphics" className="w-full h-full" />
             </div>
           </div>
           <CardTitle className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Unicraft
+            Samiul Graphics
           </CardTitle>
           <CardDescription className="text-sm sm:text-base">
             Admin Portal - Manage schools and ID card orders

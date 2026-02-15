@@ -131,16 +131,16 @@ export const Register = () => {
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <Card className="w-full max-w-md shadow-xl">
           <CardContent className="pt-6 text-center space-y-6">
-            {/* UniCraft Logo */}
+            {/* Samiul Graphics Logo */}
             <div className="flex justify-center">
               <div className="w-16 h-16 rounded-xl flex items-center justify-center overflow-hidden">
                 <img 
-                  src="/unicraft-logo.png" 
-                  alt="UniCraft" 
+                  src="/samiul-graphics-logo.png" 
+                  alt="Samiul Graphics" 
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     // Fallback to SVG logo
-                    e.currentTarget.src = '/unicraft-logo.svg';
+                    e.currentTarget.src = '/samiul-graphics-logo.svg';
                   }}
                 />
               </div>
@@ -150,7 +150,7 @@ export const Register = () => {
             <div className="space-y-2">
               <h2 className="text-2xl font-bold">Registration Successful!</h2>
               <p className="text-muted-foreground">
-                Your school has been registered with UniCraft. You can now login and start using the portal!
+                Your school has been registered with Samiul Graphics. You can now login and start using the portal!
               </p>
             </div>
             <Button onClick={() => navigate('/login')} className="w-full" size="lg">
@@ -166,22 +166,22 @@ export const Register = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-4">
-          {/* UniCraft Logo and Branding */}
+          {/* Samiul Graphics Logo and Branding */}
           <div className="flex flex-col items-center space-y-3">
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
               <img 
-                src="/unicraft-logo.png" 
-                alt="UniCraft Logo" 
+                src="/samiul-graphics-logo.png" 
+                alt="Samiul Graphics Logo" 
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   // Fallback to SVG logo
-                  e.currentTarget.src = '/unicraft-logo.svg';
+                  e.currentTarget.src = '/samiul-graphics-logo.svg';
                 }}
               />
             </div>
             <div className="text-center">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                UniCraft
+                Samiul Graphics
               </h1>
               <p className="text-sm text-muted-foreground mt-1">School Portal</p>
             </div>

@@ -64,22 +64,22 @@ export const Login = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-4">
-          {/* UniCraft Logo and Branding */}
+          {/* Samiul Graphics Logo and Branding */}
           <div className="flex flex-col items-center space-y-3">
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
               <img 
-                src="/unicraft-logo.png" 
-                alt="UniCraft Logo" 
+                src="/samiul-graphics-logo.png" 
+                alt="Samiul Graphics Logo" 
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   // Fallback to SVG logo
-                  e.currentTarget.src = '/unicraft-logo.svg';
+                  e.currentTarget.src = '/samiul-graphics-logo.svg';
                 }}
               />
             </div>
             <div className="text-center">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                UniCraft
+                Samiul Graphics
               </h1>
               <p className="text-sm text-muted-foreground mt-1">School Portal</p>
             </div>
