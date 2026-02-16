@@ -45,7 +45,20 @@ export const createBatchSubmission = async (
       return;
     }
 
-    const { studentIds }: BatchSubmissionInput = validation.data;
+    const { studentIds, staffIds }: BatchSubmissionInput = validation.data;
+
+    // Ensure at least one member is selected
+    const totalMembers = (studentIds?.length || 0) + (staffIds?.length || 0);
+    if (totalMembers === 0) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'NO_MEMBERS_SELECTED',
+          message: 'At least one student or staff member must be selected',
+        },
+      });
+      return;
+    }
 
     // Check if school has uploaded logo and signature
     const schoolCheckSql = `
@@ -71,53 +84,112 @@ export const createBatchSubmission = async (
       return;
     }
 
-    // Verify all students belong to this school
-    const checkSql = `
-      SELECT id FROM students
-      WHERE id = ANY($1::uuid[]) AND school_id = $2
-    `;
-    const validStudents = await executeQuery<{ id: string }>(checkSql, [
-      studentIds,
-      schoolId,
-    ]);
+    // Verify all students belong to this school (if any)
+    if (studentIds && studentIds.length > 0) {
+      const checkSql = `
+        SELECT id FROM students
+        WHERE id = ANY($1::uuid[]) AND school_id = $2
+      `;
+      const validStudents = await executeQuery<{ id: string }>(checkSql, [
+        studentIds,
+        schoolId,
+      ]);
 
-    if (validStudents.length !== studentIds.length) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'INVALID_STUDENTS',
-          message: 'Some students do not belong to your school or do not exist',
-        },
-      });
-      return;
+      if (validStudents.length !== studentIds.length) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_STUDENTS',
+            message: 'Some students do not belong to your school or do not exist',
+          },
+        });
+        return;
+      }
+    }
+
+    // Verify all staff belong to this school (if any)
+    if (staffIds && staffIds.length > 0) {
+      const checkSql = `
+        SELECT id FROM staff
+        WHERE id = ANY($1::uuid[]) AND school_id = $2
+      `;
+      const validStaff = await executeQuery<{ id: string }>(checkSql, [
+        staffIds,
+        schoolId,
+      ]);
+
+      if (validStaff.length !== staffIds.length) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_STAFF',
+            message: 'Some staff members do not belong to your school or do not exist',
+          },
+        });
+        return;
+      }
     }
 
     // Check if any students are already in a pending/processing submission
-    const duplicateCheckSql = `
-      SELECT DISTINCT ss.student_id
-      FROM submission_students ss
-      JOIN batch_submissions bs ON ss.submission_id = bs.id
-      WHERE ss.student_id = ANY($1::uuid[])
-        AND bs.school_id = $2
-        AND bs.status IN ('submitted', 'processing')
-    `;
-    const duplicateStudents = await executeQuery<{ student_id: string }>(
-      duplicateCheckSql,
-      [studentIds, schoolId]
-    );
+    if (studentIds && studentIds.length > 0) {
+      const duplicateCheckSql = `
+        SELECT DISTINCT sm.member_id
+        FROM submission_members sm
+        JOIN batch_submissions bs ON sm.submission_id = bs.id
+        WHERE sm.member_id = ANY($1::uuid[])
+          AND sm.member_type = 'student'
+          AND bs.school_id = $2
+          AND bs.status IN ('submitted', 'processing')
+      `;
+      const duplicateStudents = await executeQuery<{ member_id: string }>(
+        duplicateCheckSql,
+        [studentIds, schoolId]
+      );
 
-    if (duplicateStudents.length > 0) {
-      res.status(409).json({
-        success: false,
-        error: {
-          code: 'STUDENTS_ALREADY_SUBMITTED',
-          message: 'Some students are already in a pending or processing submission',
-          details: {
-            duplicateStudentIds: duplicateStudents.map((s) => s.student_id),
+      if (duplicateStudents.length > 0) {
+        res.status(409).json({
+          success: false,
+          error: {
+            code: 'STUDENTS_ALREADY_SUBMITTED',
+            message: 'Some students are already in a pending or processing submission',
+            details: {
+              duplicateStudentIds: duplicateStudents.map((s) => s.member_id),
+            },
           },
-        },
-      });
-      return;
+        });
+        return;
+      }
+    }
+
+    // Check if any staff are already in a pending/processing submission
+    if (staffIds && staffIds.length > 0) {
+      const duplicateCheckSql = `
+        SELECT DISTINCT sm.member_id
+        FROM submission_members sm
+        JOIN batch_submissions bs ON sm.submission_id = bs.id
+        WHERE sm.member_id = ANY($1::uuid[])
+          AND sm.member_type = 'staff'
+          AND bs.school_id = $2
+          AND bs.status IN ('submitted', 'processing')
+      `;
+      const duplicateStaff = await executeQuery<{ member_id: string }>(
+        duplicateCheckSql,
+        [staffIds, schoolId]
+      );
+
+      if (duplicateStaff.length > 0) {
+        res.status(409).json({
+          success: false,
+          error: {
+            code: 'STAFF_ALREADY_SUBMITTED',
+            message: 'Some staff members are already in a pending or processing submission',
+            details: {
+              duplicateStaffIds: duplicateStaff.map((s) => s.member_id),
+            },
+          },
+        });
+        return;
+      }
     }
 
     // Create batch submission using a transaction
@@ -133,12 +205,23 @@ export const createBatchSubmission = async (
       const batchResult = await query(insertBatchSql, [schoolId]);
       const batch = batchResult.rows[0];
 
-      // Insert submission_students records
-      const insertStudentsSql = `
-        INSERT INTO submission_students (submission_id, student_id)
-        SELECT $1, unnest($2::uuid[])
-      `;
-      await query(insertStudentsSql, [batch.id, studentIds]);
+      // Insert submission_members records for students
+      if (studentIds && studentIds.length > 0) {
+        const insertStudentsSql = `
+          INSERT INTO submission_members (submission_id, member_type, member_id)
+          SELECT $1, 'student', unnest($2::uuid[])
+        `;
+        await query(insertStudentsSql, [batch.id, studentIds]);
+      }
+
+      // Insert submission_members records for staff
+      if (staffIds && staffIds.length > 0) {
+        const insertStaffSql = `
+          INSERT INTO submission_members (submission_id, member_type, member_id)
+          SELECT $1, 'staff', unnest($2::uuid[])
+        `;
+        await query(insertStaffSql, [batch.id, staffIds]);
+      }
 
       // Commit transaction
       await query('COMMIT');
@@ -149,9 +232,10 @@ export const createBatchSubmission = async (
         activityType: 'batch_submitted',
         entityType: 'batch',
         entityId: batch.id,
-        description: `Submitted batch with ${studentIds.length} student${studentIds.length > 1 ? 's' : ''}`,
+        description: `Submitted batch with ${studentIds?.length || 0} student${(studentIds?.length || 0) !== 1 ? 's' : ''} and ${staffIds?.length || 0} staff member${(staffIds?.length || 0) !== 1 ? 's' : ''}`,
         metadata: {
-          studentCount: studentIds.length,
+          studentCount: studentIds?.length || 0,
+          staffCount: staffIds?.length || 0,
           batchId: batch.id,
         },
       });
@@ -162,7 +246,9 @@ export const createBatchSubmission = async (
           id: batch.id,
           submittedAt: batch.submitted_at,
           status: batch.status,
-          studentCount: studentIds.length,
+          studentCount: studentIds?.length || 0,
+          staffCount: staffIds?.length || 0,
+          totalCount: (studentIds?.length || 0) + (staffIds?.length || 0),
         },
         message: 'Batch submission created successfully',
       });
@@ -249,13 +335,14 @@ export const getSchoolBatches = async (
     );
     const total = parseInt(countResult?.count || '0');
 
-    // Get paginated data with student count
+    // Get paginated data with student and staff count
     const dataSql = `
       SELECT 
         bs.*,
-        COUNT(ss.student_id) as student_count
+        COUNT(CASE WHEN sm.member_type = 'student' THEN 1 END) as student_count,
+        COUNT(CASE WHEN sm.member_type = 'staff' THEN 1 END) as staff_count
       FROM batch_submissions bs
-      LEFT JOIN submission_students ss ON bs.id = ss.submission_id
+      LEFT JOIN submission_members sm ON bs.id = sm.submission_id
       WHERE ${whereClause}
       GROUP BY bs.id
       ORDER BY bs.submitted_at DESC
@@ -341,18 +428,30 @@ export const getBatchDetails = async (
     const studentsSql = `
       SELECT s.*
       FROM students s
-      JOIN submission_students ss ON s.id = ss.student_id
-      WHERE ss.submission_id = $1
+      JOIN submission_members sm ON s.id = sm.member_id
+      WHERE sm.submission_id = $1 AND sm.member_type = 'student'
       ORDER BY s.name
     `;
     const students = await executeQuery(studentsSql, [batchId]);
+
+    // Get staff in this batch
+    const staffSql = `
+      SELECT st.*
+      FROM staff st
+      JOIN submission_members sm ON st.id = sm.member_id
+      WHERE sm.submission_id = $1 AND sm.member_type = 'staff'
+      ORDER BY st.name
+    `;
+    const staff = await executeQuery(staffSql, [batchId]);
 
     res.status(200).json({
       success: true,
       data: {
         batch,
         students,
+        staff,
         studentCount: students.length,
+        staffCount: staff.length,
       },
     });
   } catch (error) {

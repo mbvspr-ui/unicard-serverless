@@ -4,9 +4,19 @@ import { z } from 'zod';
 export const batchSubmissionSchema = z.object({
   studentIds: z
     .array(z.string().uuid('Invalid student ID format'))
-    .min(1, 'At least one student must be selected')
-    .max(1000, 'Maximum 1000 students per batch'),
-});
+    .optional()
+    .default([]),
+  staffIds: z
+    .array(z.string().uuid('Invalid staff ID format'))
+    .optional()
+    .default([]),
+}).refine(
+  (data) => (data.studentIds?.length || 0) + (data.staffIds?.length || 0) > 0,
+  { message: 'At least one student or staff member must be selected' }
+).refine(
+  (data) => (data.studentIds?.length || 0) + (data.staffIds?.length || 0) <= 1000,
+  { message: 'Maximum 1000 members per batch' }
+);
 
 // Query parameters for listing batches
 export const batchListQuerySchema = z.object({
