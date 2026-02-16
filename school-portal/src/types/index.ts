@@ -58,3 +58,55 @@ export interface StudentInput {
   city: string;
   pincode: string;
 }
+
+export interface Staff {
+  id: string;
+  school_id: string;
+  name: string;
+  father_spouse_name: string | null;
+  date_of_birth: string | null;
+  gender: 'Male' | 'Female' | 'Other' | null;
+  phone_number: string | null;
+  blood_group: string | null;
+  photo_url: string | null;
+  employee_id: string | null;
+  staff_type: 'Teaching' | 'Non-Teaching' | 'Administrative' | 'Support';
+  designation: string;
+  department: string | null;
+  date_of_joining: string | null;
+  qualification: string | null;
+  address: string | null;
+  state: string;
+  district: string;
+  city: string;
+  pincode: string;
+  emergency_contact_name: string | null;
+  emergency_contact_number: string | null;
+  emergency_contact_relationship: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StaffInput {
+  name: string;
+  father_spouse_name?: string;
+  date_of_birth?: string;
+  gender?: 'Male' | 'Female' | 'Other';
+  phone_number?: string;
+  blood_group?: string;
+  photo_url?: string;
+  employee_id?: string;
+  staff_type: 'Teaching' | 'Non-Teaching' | 'Administrative' | 'Support';
+  designation: string;
+  department?: string;
+  date_of_joining?: string;
+  qualification?: string;
+  address?: string;
+  state: string;
+  district: string;
+  city: string;
+  pincode: string;
+  emergency_contact_name?: string;
+  emergency_contact_number?: string;
+  emergency_contact_relationship?: string;
+}

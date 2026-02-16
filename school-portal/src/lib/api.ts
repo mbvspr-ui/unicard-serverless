@@ -1,4 +1,4 @@
-import { Student, StudentInput } from '../types';
+import { Student, StudentInput, Staff, StaffInput } from '../types';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
 
@@ -132,6 +132,74 @@ export const studentApi = {
   },
 };
 
+// Staff APIs
+export const staffApi = {
+  create: async (staffData: StaffInput): Promise<ApiResponse<Staff>> => {
+    return fetchWithAuth<Staff>('/api/staff', {
+      method: 'POST',
+      body: JSON.stringify(staffData),
+    });
+  },
+
+  getAll: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    staff_type?: string;
+    department?: string;
+    refresh?: boolean;
+  }): Promise<ApiResponse<{ data: Staff[]; pagination: any }>> => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.staff_type) queryParams.append('staff_type', params.staff_type);
+    if (params?.department) queryParams.append('department', params.department);
+    if (params?.refresh) queryParams.append('refresh', 'true');
+
+    const query = queryParams.toString();
+    return fetchWithAuth<{ data: Staff[]; pagination: any }>(
+      `/api/staff${query ? `?${query}` : ''}`
+    );
+  },
+
+  getById: async (staffId: string): Promise<ApiResponse<Staff>> => {
+    return fetchWithAuth<Staff>(`/api/staff/${staffId}`);
+  },
+
+  update: async (
+    staffId: string,
+    staffData: Partial<StaffInput>
+  ): Promise<ApiResponse<Staff>> => {
+    return fetchWithAuth<Staff>(`/api/staff/${staffId}`, {
+      method: 'PUT',
+      body: JSON.stringify(staffData),
+    });
+  },
+
+  delete: async (staffId: string): Promise<ApiResponse<void>> => {
+    return fetchWithAuth<void>(`/api/staff/${staffId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  uploadPhoto: async (staffId: string, photoFile: File): Promise<ApiResponse<{ photoUrl: string }>> => {
+    const token = getAuthToken();
+    const formData = new FormData();
+    formData.append('photo', photoFile);
+
+    const response = await fetch(`${API_URL}/api/staff/${staffId}/photo`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    return response.json();
+  },
+};
+
 // School APIs
 export const schoolApi = {
   uploadLogo: async (logoFile: File): Promise<ApiResponse<{ logo_url: string }>> => {
@@ -216,15 +284,20 @@ export const activityApi = {
 
 // Batch APIs
 export const batchApi = {
-  create: async (studentIds: string[]): Promise<ApiResponse<{
+  create: async (params: {
+    studentIds?: string[];
+    staffIds?: string[];
+  }): Promise<ApiResponse<{
     id: string;
     submittedAt: string;
     status: string;
     studentCount: number;
+    staffCount: number;
+    totalCount: number;
   }>> => {
     return fetchWithAuth('/api/batches', {
       method: 'POST',
-      body: JSON.stringify({ studentIds }),
+      body: JSON.stringify(params),
     });
   },
 
@@ -245,7 +318,9 @@ export const batchApi = {
   getById: async (batchId: string): Promise<ApiResponse<{
     batch: any;
     students: any[];
+    staff: any[];
     studentCount: number;
+    staffCount: number;
   }>> => {
     return fetchWithAuth(`/api/batches/${batchId}`);
   },
