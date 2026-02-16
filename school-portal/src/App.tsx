@@ -17,6 +17,8 @@ const Dashboard = lazy(() => import('./pages/Dashboard'))
 const AddStudent = lazy(() => import('./pages/AddStudent'))
 const StudentList = lazy(() => import('./pages/StudentList'))
 const EditStudent = lazy(() => import('./pages/EditStudent'))
+const AddStaff = lazy(() => import('./pages/AddStaff'))
+const StaffList = lazy(() => import('./pages/StaffList'))
 const SubmissionHistory = lazy(() => import('./pages/SubmissionHistory'))
 const SubmissionDetail = lazy(() => import('./pages/SubmissionDetail'))
 const Profile = lazy(() => import('./pages/Profile'))
@@ -83,6 +85,22 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <EditStudent />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/staff"
+          element={
+            <ProtectedRoute>
+              <StaffList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/staff/add"
+          element={
+            <ProtectedRoute>
+              <AddStaff />
             </ProtectedRoute>
           }
         />
