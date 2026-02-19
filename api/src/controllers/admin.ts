@@ -577,7 +577,7 @@ export const updateBatchStatus = async (
         VALUES ($1, $2, $3, $4, $5, $6)
       `;
       await query(logSql, [
-        req.admin?.id,
+        req.user?.userId,
         'UPDATE',
         'batch',
         batchId,
@@ -1049,6 +1049,7 @@ export const getAuditLog = async (
   } catch (error) {
     console.error('Get audit log error:', error);
     // Return empty results instead of 500 error
+    const { limit = '50', page = '1' } = req.query;
     res.status(200).json({
       success: true,
       data: [],
@@ -1136,7 +1137,7 @@ export const deleteSchool = async (
           VALUES ($1, $2, $3, $4, $5, $6)
         `;
         await query(logSql, [
-          req.admin?.id || req.user?.userId,
+          req.user?.userId,
           'DELETE',
           'school',
           schoolId,
