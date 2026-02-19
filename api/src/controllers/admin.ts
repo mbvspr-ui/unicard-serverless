@@ -158,6 +158,16 @@ export const getSchoolById = async (
     ]);
     const studentCount = parseInt(countResult?.count || '0');
 
+    // Get staff count
+    const staffCountSql = `
+      SELECT COUNT(*) as count FROM staff WHERE school_id = $1
+    `;
+    const staffCountResult = await executeQueryOne<{ count: string }>(
+      staffCountSql,
+      [schoolId]
+    );
+    const staffCount = parseInt(staffCountResult?.count || '0');
+
     // Get batch submission count
     const batchCountSql = `
       SELECT COUNT(*) as count FROM batch_submissions WHERE school_id = $1
@@ -173,6 +183,7 @@ export const getSchoolById = async (
       data: {
         ...school,
         studentCount,
+        staffCount,
         batchCount,
       },
     });
@@ -357,16 +368,17 @@ export const getAllBatches = async (
     );
     const total = parseInt(countResult?.count || '0');
 
-    // Get paginated data with school info and student count
+    // Get paginated data with school info and member count
     const dataSql = `
-      SELECT 
+      SELECT
         bs.*,
         s.name as school_name,
         s.email as school_email,
-        COUNT(ss.student_id) as student_count
+        COUNT(sm.member_id) as member_count,
+        COUNT(sm.member_id) as student_count
       FROM batch_submissions bs
       JOIN schools s ON bs.school_id = s.id
-      LEFT JOIN submission_students ss ON bs.id = ss.submission_id
+      LEFT JOIN submission_members sm ON bs.id = sm.submission_id
       ${whereClause}
       GROUP BY bs.id, s.name, s.email
       ORDER BY bs.submitted_at DESC
@@ -454,18 +466,30 @@ export const getAdminBatchDetails = async (
     const studentsSql = `
       SELECT s.*
       FROM students s
-      JOIN submission_students ss ON s.id = ss.student_id
-      WHERE ss.submission_id = $1
+      JOIN submission_members sm ON s.id = sm.member_id
+      WHERE sm.submission_id = $1 AND sm.member_type = 'student'
       ORDER BY s.name
     `;
     const students = await executeQuery(studentsSql, [batchId]);
+
+    // Get staff in this batch
+    const staffSql = `
+      SELECT st.*
+      FROM staff st
+      JOIN submission_members sm ON st.id = sm.member_id
+      WHERE sm.submission_id = $1 AND sm.member_type = 'staff'
+      ORDER BY st.name
+    `;
+    const staff = await executeQuery(staffSql, [batchId]);
 
     res.status(200).json({
       success: true,
       data: {
         batch,
         students,
+        staff,
         studentCount: students.length,
+        staffCount: staff.length,
       },
     });
   } catch (error) {
@@ -604,6 +628,11 @@ export const getAnalytics = async (
     const studentsCount = await executeQueryOne<{ count: string }>(studentsCountSql, []);
     const totalStudents = parseInt(studentsCount?.count || '0');
 
+    // Get total staff
+    const staffCountSql = `SELECT COUNT(*) as count FROM staff`;
+    const staffCount = await executeQueryOne<{ count: string }>(staffCountSql, []);
+    const totalStaff = parseInt(staffCount?.count || '0');
+
     // Get total orders
     const ordersCountSql = `SELECT COUNT(*) as count FROM batch_submissions`;
     const ordersCount = await executeQueryOne<{ count: string }>(ordersCountSql, []);
@@ -675,6 +704,7 @@ export const getAnalytics = async (
       data: {
         totalSchools,
         totalStudents,
+        totalStaff,
         totalOrders,
         ordersThisMonth: parseInt(ordersThisMonth?.count || '0'),
         ordersThisWeek: parseInt(ordersThisWeek?.count || '0'),
@@ -697,54 +727,75 @@ export const getAnalytics = async (
 };
 
 /**
- * Get school activity log
- * GET /api/admin/schools/:schoolId/activity
+ * Get staff analytics
+ * GET /api/admin/analytics/staff
  */
-export const getSchoolActivity = async (
+export const getStaffAnalytics = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const { schoolId } = req.params;
-    const { limit = '20' } = req.query;
+    // Get total staff count
+    const totalStaffSql = `SELECT COUNT(*) as count FROM staff`;
+    const totalStaffResult = await executeQueryOne<{ count: string }>(totalStaffSql, []);
+    const totalStaff = parseInt(totalStaffResult?.count || '0');
 
-    if (!schoolId) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'SCHOOL_ID_MISSING',
-          message: 'School ID is required',
-        },
-      });
-      return;
-    }
-
-    const activitySql = `
-      SELECT 
-        id,
-        activity_type,
-        entity_type,
-        description,
-        metadata,
-        created_at
-      FROM activity_log
-      WHERE school_id = $1
-      ORDER BY created_at DESC
-      LIMIT $2
+    // Get staff by type
+    const staffByTypeSql = `
+      SELECT staff_type, COUNT(*) as count
+      FROM staff
+      GROUP BY staff_type
+      ORDER BY count DESC
     `;
-    const activities = await executeQuery(activitySql, [schoolId, parseInt(limit as string)]);
+    const staffByType = await executeQuery(staffByTypeSql, []);
+
+    // Get staff by department
+    const staffByDepartmentSql = `
+      SELECT department, COUNT(*) as count
+      FROM staff
+      WHERE department IS NOT NULL
+      GROUP BY department
+      ORDER BY count DESC
+      LIMIT 10
+    `;
+    const staffByDepartment = await executeQuery(staffByDepartmentSql, []);
+
+    // Get staff growth over time (monthly for last 12 months)
+    const staffGrowthSql = `
+      SELECT 
+        DATE_TRUNC('month', created_at) as month,
+        COUNT(*) as count
+      FROM staff
+      WHERE created_at >= CURRENT_DATE - INTERVAL '12 months'
+      GROUP BY DATE_TRUNC('month', created_at)
+      ORDER BY month
+    `;
+    const staffGrowth = await executeQuery(staffGrowthSql, []);
+
+    // Calculate staff-to-student ratio
+    const totalStudentsSql = `SELECT COUNT(*) as count FROM students`;
+    const totalStudentsResult = await executeQueryOne<{ count: string }>(totalStudentsSql, []);
+    const totalStudents = parseInt(totalStudentsResult?.count || '0');
+    const staffToStudentRatio = totalStudents > 0 ? (totalStudents / totalStaff).toFixed(2) : '0';
 
     res.status(200).json({
       success: true,
-      data: activities,
+      data: {
+        totalStaff,
+        staffByType,
+        staffByDepartment,
+        staffGrowth,
+        staffToStudentRatio,
+        totalStudents,
+      },
     });
   } catch (error) {
-    console.error('Get school activity error:', error);
+    console.error('Get staff analytics error:', error);
     res.status(500).json({
       success: false,
       error: {
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch school activity',
+        message: 'Failed to fetch staff analytics',
       },
     });
   }
@@ -760,7 +811,7 @@ export const getSchoolStudents = async (
 ): Promise<void> => {
   try {
     const { schoolId } = req.params;
-    const { limit = '100' } = req.query;
+    const { limit = '100', page = '1', search = '' } = req.query;
 
     if (!schoolId) {
       res.status(400).json({
@@ -772,6 +823,28 @@ export const getSchoolStudents = async (
       });
       return;
     }
+
+    const limitNum = parseInt(limit as string);
+    const pageNum = parseInt(page as string);
+    const offset = (pageNum - 1) * limitNum;
+
+    // Build WHERE clause
+    const conditions: string[] = ['school_id = $1'];
+    const values: any[] = [schoolId];
+    let paramIndex = 2;
+
+    if (search) {
+      conditions.push(`(name ILIKE $${paramIndex} OR roll_number ILIKE $${paramIndex})`);
+      values.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    const whereClause = conditions.join(' AND ');
+
+    // Get total count
+    const countSql = `SELECT COUNT(*) as count FROM students WHERE ${whereClause}`;
+    const countResult = await executeQueryOne<{ count: string }>(countSql, values);
+    const total = parseInt(countResult?.count || '0');
 
     const studentsSql = `
       SELECT 
@@ -788,16 +861,21 @@ export const getSchoolStudents = async (
         photo_url,
         created_at
       FROM students
-      WHERE school_id = $1
+      WHERE ${whereClause}
       ORDER BY class, section, roll_number
-      LIMIT $2
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
-    const students = await executeQuery(studentsSql, [schoolId, parseInt(limit as string)]);
+    const students = await executeQuery(studentsSql, [...values, limitNum, offset]);
 
     res.status(200).json({
       success: true,
       data: students,
-      count: students.length,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum),
+      },
     });
   } catch (error) {
     console.error('Get school students error:', error);
@@ -806,6 +884,104 @@ export const getSchoolStudents = async (
       error: {
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to fetch school students',
+      },
+    });
+  }
+};
+
+/**
+ * Get school staff
+ * GET /api/admin/schools/:schoolId/staff
+ */
+export const getSchoolStaff = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { schoolId } = req.params;
+    const { limit = '100', page = '1', search = '', staffType = '', department = '' } = req.query;
+
+    if (!schoolId) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'SCHOOL_ID_MISSING',
+          message: 'School ID is required',
+        },
+      });
+      return;
+    }
+
+    const limitNum = parseInt(limit as string);
+    const pageNum = parseInt(page as string);
+    const offset = (pageNum - 1) * limitNum;
+
+    // Build WHERE clause
+    const conditions: string[] = ['school_id = $1'];
+    const values: any[] = [schoolId];
+    let paramIndex = 2;
+
+    if (search) {
+      conditions.push(`(name ILIKE $${paramIndex} OR employee_id ILIKE $${paramIndex})`);
+      values.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    if (staffType) {
+      conditions.push(`staff_type = $${paramIndex}`);
+      values.push(staffType);
+      paramIndex++;
+    }
+
+    if (department) {
+      conditions.push(`department = $${paramIndex}`);
+      values.push(department);
+      paramIndex++;
+    }
+
+    const whereClause = conditions.join(' AND ');
+
+    // Get total count
+    const countSql = `SELECT COUNT(*) as count FROM staff WHERE ${whereClause}`;
+    const countResult = await executeQueryOne<{ count: string }>(countSql, values);
+    const total = parseInt(countResult?.count || '0');
+
+    const staffSql = `
+      SELECT 
+        id,
+        name,
+        employee_id,
+        staff_type,
+        designation,
+        department,
+        phone_number,
+        date_of_joining,
+        photo_url,
+        created_at
+      FROM staff
+      WHERE ${whereClause}
+      ORDER BY name
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+    const staff = await executeQuery(staffSql, [...values, limitNum, offset]);
+
+    res.status(200).json({
+      success: true,
+      data: staff,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum),
+      },
+    });
+  } catch (error) {
+    console.error('Get school staff error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch school staff',
       },
     });
   }
@@ -881,6 +1057,119 @@ export const getAuditLog = async (
         page: parseInt(page as string),
         limit: parseInt(limit as string),
         pages: 0,
+      },
+    });
+  }
+};
+
+/**
+ * Delete school and all associated data
+ * DELETE /api/admin/schools/:schoolId
+ */
+export const deleteSchool = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { schoolId } = req.params;
+
+    if (!schoolId) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'SCHOOL_ID_MISSING',
+          message: 'School ID is required',
+        },
+      });
+      return;
+    }
+
+    // Check if school exists
+    const checkSql = `SELECT id, name FROM schools WHERE id = $1`;
+    const existingSchool = await executeQueryOne<{ id: string; name: string }>(
+      checkSql,
+      [schoolId]
+    );
+
+    if (!existingSchool) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'SCHOOL_NOT_FOUND',
+          message: 'School not found',
+        },
+      });
+      return;
+    }
+
+    // Delete all associated data in transaction
+    // Order matters due to foreign key constraints
+    try {
+      // Delete submission members first
+      await executeQuery(
+        `DELETE FROM submission_members 
+         WHERE submission_id IN (SELECT id FROM batch_submissions WHERE school_id = $1)`,
+        [schoolId]
+      );
+
+      // Delete batch submissions
+      await executeQuery(
+        `DELETE FROM batch_submissions WHERE school_id = $1`,
+        [schoolId]
+      );
+
+      // Delete students
+      await executeQuery(`DELETE FROM students WHERE school_id = $1`, [
+        schoolId,
+      ]);
+
+      // Delete staff
+      await executeQuery(`DELETE FROM staff WHERE school_id = $1`, [schoolId]);
+
+      // Finally delete the school
+      await executeQuery(`DELETE FROM schools WHERE id = $1`, [schoolId]);
+
+      // Log the action
+      try {
+        const logSql = `
+          INSERT INTO admin_audit_log (admin_id, action_type, entity_type, entity_id, description, metadata)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `;
+        await query(logSql, [
+          req.admin?.id || req.user?.userId,
+          'DELETE',
+          'school',
+          schoolId,
+          `Deleted school: ${existingSchool.name}`,
+          JSON.stringify({ school_name: existingSchool.name }),
+        ]);
+      } catch (logError) {
+        console.error('Failed to log audit:', logError);
+        // Don't fail the request if logging fails
+      }
+
+      res.status(200).json({
+        success: true,
+        message: `School "${existingSchool.name}" and all associated data deleted successfully`,
+      });
+    } catch (deleteError: any) {
+      console.error('Delete school error:', deleteError);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'DELETE_ERROR',
+          message: 'Failed to delete school and associated data',
+          details: deleteError.message,
+        },
+      });
+    }
+  } catch (error) {
+    console.error('Delete school error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to delete school',
       },
     });
   }

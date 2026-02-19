@@ -1,0 +1,55 @@
+{
+  "name": "Samiul Graphics Admin Portal",
+  "short_name": "Admin Portal",
+  "description": "Manage schools, batches, and ID card orders",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/samiul-graphics-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity", "business"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Schools",
+      "short_name": "Schools",
+      "description": "View all schools",
+      "url": "/schools",
+      "icons": [{ "src": "/samiul-graphics-logo.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Batches",
+      "short_name": "Batches",
+      "description": "View all batches",
+      "url": "/batches",
+      "icons": [{ "src": "/samiul-graphics-logo.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Analytics",
+      "short_name": "Analytics",
+      "description": "View analytics",
+      "url": "/analytics",
+      "icons": [{ "src": "/samiul-graphics-logo.svg", "sizes": "96x96" }]
+    }
+  ]
+}

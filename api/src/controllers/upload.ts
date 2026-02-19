@@ -8,7 +8,6 @@ import {
   validateFileSize,
 } from '../config/storage.js';
 import { executeQueryOne } from '../utils/db-helpers.js';
-import { logActivity } from '../utils/activity-logger.js';
 
 /**
  * Upload school logo
@@ -93,18 +92,6 @@ export const uploadLogo = async (
       });
       return;
     }
-
-    // Log activity
-    await logActivity({
-      schoolId,
-      activityType: 'logo_uploaded',
-      entityType: 'school',
-      description: 'Uploaded school logo',
-      metadata: {
-        fileSize: req.file.size,
-        mimeType: req.file.mimetype,
-      },
-    });
 
     res.status(200).json({
       success: true,
@@ -209,18 +196,6 @@ export const uploadSignature = async (
       });
       return;
     }
-
-    // Log activity
-    await logActivity({
-      schoolId,
-      activityType: 'signature_uploaded',
-      entityType: 'school',
-      description: 'Uploaded principal signature',
-      metadata: {
-        fileSize: req.file.size,
-        mimeType: req.file.mimetype,
-      },
-    });
 
     res.status(200).json({
       success: true,
@@ -361,6 +336,131 @@ export const uploadStudentPhoto = async (
       error: {
         code: 'FILE_UPLOAD_ERROR',
         message: 'Failed to upload student photo',
+      },
+    });
+  }
+};
+
+/**
+ * Upload staff photo
+ * POST /api/staff/:staffId/photo
+ */
+export const uploadStaffPhoto = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const schoolId = req.user?.userId;
+    const { staffId } = req.params;
+
+    if (!schoolId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'User not authenticated',
+        },
+      });
+      return;
+    }
+
+    if (!staffId) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'STAFF_ID_MISSING',
+          message: 'Staff ID is required',
+        },
+      });
+      return;
+    }
+
+    // Check if file was uploaded
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'FILE_MISSING',
+          message: 'No file uploaded',
+        },
+      });
+      return;
+    }
+
+    // Validate file type and size
+    if (!validateFileType(req.file.mimetype)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_FILE_TYPE',
+          message: 'Invalid file type. Only JPEG and PNG images are allowed.',
+        },
+      });
+      return;
+    }
+
+    if (!validateFileSize(req.file.size)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'FILE_TOO_LARGE',
+          message: 'File size exceeds 5MB limit',
+        },
+      });
+      return;
+    }
+
+    // Verify staff belongs to this school
+    const checkSql = `
+      SELECT id, school_id FROM staff
+      WHERE id = $1 AND school_id = $2
+    `;
+    const staff = await executeQueryOne(checkSql, [staffId, schoolId]);
+
+    if (!staff) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'STAFF_NOT_FOUND',
+          message: 'Staff member not found or does not belong to your school',
+        },
+      });
+      return;
+    }
+
+    // Upload to R2
+    const { uploadStaffPhoto: uploadStaffPhotoToR2 } = await import('../config/storage.js');
+    const photoUrl = await uploadStaffPhotoToR2(
+      req.file.buffer,
+      schoolId,
+      staffId,
+      req.file.mimetype
+    );
+
+    // Update staff record in database
+    const updateSql = `
+      UPDATE staff
+      SET photo_url = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, name, photo_url
+    `;
+    const updatedStaff = await executeQueryOne(updateSql, [photoUrl, staffId]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        photoUrl,
+        staff: updatedStaff,
+      },
+      message: 'Staff photo uploaded successfully',
+    });
+  } catch (error) {
+    console.error('Upload staff photo error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'FILE_UPLOAD_ERROR',
+        message: 'Failed to upload staff photo',
       },
     });
   }

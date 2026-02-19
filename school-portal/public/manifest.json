@@ -1,0 +1,55 @@
+{
+  "name": "Samiul Graphics School Portal",
+  "short_name": "School Portal",
+  "description": "Manage students, staff, and ID card orders",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/samiul-graphics-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Add Student",
+      "short_name": "Add Student",
+      "description": "Add a new student",
+      "url": "/students/add",
+      "icons": [{ "src": "/samiul-graphics-logo.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Add Staff",
+      "short_name": "Add Staff",
+      "description": "Add a new staff member",
+      "url": "/staff/add",
+      "icons": [{ "src": "/samiul-graphics-logo.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "View Students",
+      "short_name": "Students",
+      "description": "View all students",
+      "url": "/students",
+      "icons": [{ "src": "/samiul-graphics-logo.svg", "sizes": "96x96" }]
+    }
+  ]
+}

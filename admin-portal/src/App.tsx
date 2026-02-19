@@ -1,27 +1,28 @@
-// MAINTENANCE MODE - Uncomment below to disable maintenance
-// import { lazy, Suspense } from 'react'
-// import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-// import { Toaster } from 'sonner'
-// import { AdminAuthProvider } from './contexts/AdminAuthContext'
-// import { AdminProtectedRoute } from './components/auth/AdminProtectedRoute'
-// import { ErrorBoundary } from './components/ErrorBoundary'
-// import BottomNav from './components/BottomNav'
-// import Header from './components/Header'
-// import MobileHeader from './components/MobileHeader'
-// import SessionExpiryWarning from './components/SessionExpiryWarning'
+import { lazy, Suspense } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Toaster } from 'sonner'
+import { AdminAuthProvider } from './contexts/AdminAuthContext'
+import { AdminProtectedRoute } from './components/auth/AdminProtectedRoute'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import BottomNav from './components/BottomNav'
+import Header from './components/Header'
+import MobileHeader from './components/MobileHeader'
+import SessionExpiryWarning from './components/SessionExpiryWarning'
+import InstallPrompt from './components/InstallPrompt'
+import OfflineIndicator from './components/OfflineIndicator'
 
-// Maintenance mode
-import Maintenance from './pages/Maintenance'
+// Maintenance mode - uncomment below to enable
+// import Maintenance from './pages/Maintenance'
 
 // Lazy load pages for better performance
-// const Login = lazy(() => import('./pages/Login'))
-// const Dashboard = lazy(() => import('./pages/Dashboard'))
-// const Analytics = lazy(() => import('./pages/Analytics'))
-// const SchoolList = lazy(() => import('./pages/SchoolList'))
-// const SchoolDetails = lazy(() => import('./pages/SchoolDetails'))
-// const BatchList = lazy(() => import('./pages/BatchList'))
-// const BatchDetails = lazy(() => import('./pages/BatchDetails'))
-// const AuditLog = lazy(() => import('./pages/AuditLog'))
+const Login = lazy(() => import('./pages/Login'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Analytics = lazy(() => import('./pages/Analytics'))
+const SchoolList = lazy(() => import('./pages/SchoolList'))
+const SchoolDetails = lazy(() => import('./pages/SchoolDetails'))
+const BatchList = lazy(() => import('./pages/BatchList'))
+const BatchDetails = lazy(() => import('./pages/BatchDetails'))
+const AuditLog = lazy(() => import('./pages/AuditLog'))
 
 // Loading fallback component
 function PageLoader() {
@@ -91,25 +92,26 @@ function AppContent() {
         {showNav && <BottomNav />}
         <SessionExpiryWarning />
       </div>
+      <InstallPrompt />
+      <OfflineIndicator />
       <Toaster position="top-center" richColors />
     </>
   );
 }
 
 function App() {
-  // MAINTENANCE MODE ACTIVE
-  return <Maintenance />
+  // MAINTENANCE MODE - Uncomment below to enable
+  // return <Maintenance />
   
-  // Uncomment below to disable maintenance mode
-  // return (
-  //   <ErrorBoundary>
-  //     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-  //       <AdminAuthProvider>
-  //         <AppContent />
-  //       </AdminAuthProvider>
-  //     </Router>
-  //   </ErrorBoundary>
-  // );
+  return (
+    <ErrorBoundary>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AdminAuthProvider>
+          <AppContent />
+        </AdminAuthProvider>
+      </Router>
+    </ErrorBoundary>
+  );
 }
 
 export default App

@@ -30,15 +30,11 @@ export const Header = ({ title, showBack = false, showHome = false }: HeaderProp
           <div className="flex items-center justify-between">
             {/* Left Section - Samiul Graphics Branding */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden">
+              <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center p-1.5">
                 <img 
-                  src="/samiul-graphics-logo.png" 
+                  src="/samiul-graphics-logo.svg" 
                   alt="Samiul Graphics" 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // Fallback to SVG logo
-                    e.currentTarget.src = '/samiul-graphics-logo.svg';
-                  }}
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div>

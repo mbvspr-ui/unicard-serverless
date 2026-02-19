@@ -438,7 +438,7 @@ export default function AddStaff() {
       {showPhotoEditor && (
         <PhotoEditor
           onSave={handlePhotoSaved}
-          onCancel={() => setShowPhotoEditor(false)}
+          onClose={() => setShowPhotoEditor(false)}
         />
       )}
     </div>

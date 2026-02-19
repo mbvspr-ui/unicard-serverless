@@ -19,6 +19,7 @@ interface BatchSubmissionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedStudentIds: string[];
+  selectedStaffIds?: string[];
   onSuccess: () => void;
 }
 
@@ -26,6 +27,7 @@ export function BatchSubmissionDialog({
   open,
   onOpenChange,
   selectedStudentIds,
+  selectedStaffIds = [],
   onSuccess,
 }: BatchSubmissionDialogProps) {
   const [submitting, setSubmitting] = useState(false);
@@ -36,8 +38,10 @@ export function BatchSubmissionDialog({
   const hasRequiredAssets = school?.logo_url && school?.signature_url;
 
   const handleSubmit = async () => {
-    if (selectedStudentIds.length === 0) {
-      toast.error('No students selected');
+    const totalMembers = selectedStudentIds.length + selectedStaffIds.length;
+    
+    if (totalMembers === 0) {
+      toast.error('No students or staff selected');
       return;
     }
 
@@ -52,7 +56,10 @@ export function BatchSubmissionDialog({
     setSubmitting(true);
 
     try {
-      const response = await batchApi.create(selectedStudentIds);
+      const response = await batchApi.create({
+        studentIds: selectedStudentIds.length > 0 ? selectedStudentIds : undefined,
+        staffIds: selectedStaffIds.length > 0 ? selectedStaffIds : undefined,
+      });
 
       if (response.success && response.data) {
         toast.success(
@@ -63,8 +70,8 @@ export function BatchSubmissionDialog({
         // Navigate to submission history after successful submission
         setTimeout(() => navigate('/submissions'), 500);
       } else {
-        if (response.error?.code === 'STUDENTS_ALREADY_SUBMITTED') {
-          toast.error('Some students are already in a pending submission. View Submission History to see existing submissions.', {
+        if (response.error?.code === 'STUDENTS_ALREADY_SUBMITTED' || response.error?.code === 'MEMBERS_ALREADY_SUBMITTED') {
+          toast.error('Some members are already in a pending submission. View Submission History to see existing submissions.', {
             duration: 5000,
             action: {
               label: 'View History',
@@ -94,7 +101,7 @@ export function BatchSubmissionDialog({
         <DialogHeader>
           <DialogTitle>Submit for Printing</DialogTitle>
           <DialogDescription>
-            Are you sure you want to submit these students for ID card printing?
+            Are you sure you want to submit these members for ID card printing?
           </DialogDescription>
         </DialogHeader>
 
@@ -112,12 +119,22 @@ export function BatchSubmissionDialog({
             </div>
           )}
           
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <p className="text-sm text-blue-900 font-medium">
-              Selected Students: {selectedStudentIds.length}
+          <div className="bg-blue-50 p-4 rounded-lg space-y-2">
+            {selectedStudentIds.length > 0 && (
+              <p className="text-sm text-blue-900 font-medium">
+                Selected Students: {selectedStudentIds.length}
+              </p>
+            )}
+            {selectedStaffIds.length > 0 && (
+              <p className="text-sm text-blue-900 font-medium">
+                Selected Staff: {selectedStaffIds.length}
+              </p>
+            )}
+            <p className="text-sm text-blue-900 font-bold">
+              Total Members: {selectedStudentIds.length + selectedStaffIds.length}
             </p>
             <p className="text-xs text-blue-700 mt-2">
-              Once submitted, these students will be queued for ID card printing.
+              Once submitted, these members will be queued for ID card printing.
               You can track the status in the{' '}
               <button
                 onClick={() => {

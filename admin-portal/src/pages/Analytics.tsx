@@ -36,6 +36,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 interface AnalyticsData {
   totalSchools: number;
   totalStudents: number;
+  totalStaff: number;
   totalOrders: number;
   ordersThisMonth: number;
   ordersThisWeek: number;
@@ -43,17 +44,40 @@ interface AnalyticsData {
   ordersTrend: { date: string; count: number }[];
   topSchools: { name: string; orders: number; students: number }[];
   avgProcessingTime: number;
+  staffByType?: { staff_type: string; count: number }[];
+  staffByDepartment?: { department: string; count: number }[];
+  staffToStudentRatio?: string;
 }
 
 export default function Analytics() {
   const [data, setData] = useState<AnalyticsData | null>(null);
+  const [staffData, setStaffData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dateRange, setDateRange] = useState<'week' | 'month' | 'all'>('month');
 
   useEffect(() => {
     fetchAnalytics();
+    fetchStaffAnalytics();
   }, [dateRange]);
+
+  const fetchStaffAnalytics = async () => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch(`${API_URL}/api/admin/analytics/staff`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setStaffData(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch staff analytics:', error);
+    }
+  };
 
   const fetchAnalytics = async (showRefreshIndicator = false) => {
     if (showRefreshIndicator) {
@@ -157,7 +181,7 @@ export default function Analytics() {
       {/* Content */}
       <div className="p-4 space-y-6">
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -181,6 +205,19 @@ export default function Analytics() {
             <CardContent>
               <p className="text-3xl font-bold text-green-600">{data.totalStudents}</p>
               <p className="text-xs text-muted-foreground mt-1">Across all schools</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Total Staff
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-indigo-600">{staffData?.totalStaff || 0}</p>
+              <p className="text-xs text-muted-foreground mt-1">All employees</p>
             </CardContent>
           </Card>
 
@@ -281,8 +318,59 @@ export default function Analytics() {
           </CardContent>
         </Card>
 
+        {/* Staff Analytics */}
+        {staffData && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Staff by Type */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Staff by Type</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={staffData.staffByType}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ staff_type, count }) => `${staff_type}: ${count}`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="count"
+                    >
+                      {staffData.staffByType.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Staff by Department */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Staff by Department</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={staffData.staffByDepartment}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="department" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8b5cf6" name="Staff Count" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Performance Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -327,6 +415,20 @@ export default function Analytics() {
               <p className="text-xs text-muted-foreground mt-1">Orders completed</p>
             </CardContent>
           </Card>
+
+          {staffData && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Staff:Student Ratio
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">1:{staffData.staffToStudentRatio}</p>
+                <p className="text-xs text-muted-foreground mt-1">Students per staff member</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

@@ -1,271 +1,177 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthRequest } from '../types/index.js';
-import { executeQuery, executeQueryOne } from '../utils/db-helpers.js';
-import {
-  staffSchema,
-  staffUpdateSchema,
-  staffListQuerySchema,
-  StaffInput,
-  StaffUpdateInput,
-} from '../validators/staff.js';
+import { insertOne, updateById, deleteById, findById, query } from '../utils/db-helpers.js';
+import { staffSchema, staffUpdateSchema, StaffInput } from '../validators/staff.js';
+import { cache } from '../utils/cache.js';
 
 /**
  * Create a new staff member
- * POST /api/staff
  */
-export const createStaff = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
+export const createStaff = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const schoolId = req.user?.userId;
-
     if (!schoolId) {
       res.status(401).json({
         success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'User not authenticated',
-        },
+        error: { code: 'UNAUTHORIZED', message: 'User not authenticated' },
       });
       return;
     }
 
-    // Validate input
-    const validation = staffSchema.safeParse(req.body);
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Invalid input data',
-          details: validation.error.errors,
-        },
-      });
-      return;
+    const validatedData = staffSchema.parse(req.body) as StaffInput;
+
+    const staff = await insertOne('staff', {
+      school_id: schoolId,
+      ...validatedData,
+    });
+
+    // Clear count cache for this school when staff is added
+    cache.clear(`staff_count_${schoolId}_all_all_none`);
+    cache.clear(`staff_count_${schoolId}_${validatedData.staff_type}_all_none`);
+    if (validatedData.department) {
+      cache.clear(`staff_count_${schoolId}_${validatedData.staff_type}_${validatedData.department}_none`);
     }
-
-    const data: StaffInput = validation.data;
-
-    // Insert staff into database
-    const sql = `
-      INSERT INTO staff (
-        school_id, name, father_spouse_name, date_of_birth, gender, phone_number,
-        blood_group, photo_url, employee_id, staff_type, designation, department,
-        date_of_joining, qualification, address, state, district, city, pincode,
-        emergency_contact_name, emergency_contact_number, emergency_contact_relationship
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
-      RETURNING *
-    `;
-
-    const values = [
-      schoolId,
-      data.name,
-      data.father_spouse_name || null,
-      data.date_of_birth || null,
-      data.gender || null,
-      data.phone_number || null,
-      data.blood_group || null,
-      data.photo_url || null,
-      data.employee_id || null,
-      data.staff_type,
-      data.designation,
-      data.department || null,
-      data.date_of_joining || null,
-      data.qualification || null,
-      data.address || null,
-      data.state,
-      data.district,
-      data.city,
-      data.pincode,
-      data.emergency_contact_name || null,
-      data.emergency_contact_number || null,
-      data.emergency_contact_relationship || null,
-    ];
-
-    const staff = await executeQueryOne(sql, values);
 
     res.status(201).json({
       success: true,
       data: staff,
-      message: 'Staff member created successfully',
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid input data', details: error.errors },
+      });
+      return;
+    }
+
     console.error('Create staff error:', error);
     res.status(500).json({
       success: false,
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to create staff member',
-      },
+      error: { code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create staff' },
     });
   }
 };
 
 /**
- * Get list of staff with pagination and filters
- * GET /api/staff
+ * Get staff list with pagination, search, and filters
  */
-export const getStaffList = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
+export const getStaffList = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const schoolId = req.user?.userId;
-
     if (!schoolId) {
       res.status(401).json({
         success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'User not authenticated',
-        },
+        error: { code: 'UNAUTHORIZED', message: 'User not authenticated' },
       });
       return;
     }
 
-    // Validate query parameters
-    const validation = staffListQuerySchema.safeParse(req.query);
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Invalid query parameters',
-          details: validation.error.errors,
-        },
-      });
-      return;
-    }
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const search = req.query.search as string;
+    const staffTypeFilter = req.query.staff_type as string;
+    const departmentFilter = req.query.department as string;
 
-    const { page, limit, search, staff_type, department } = validation.data;
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-    const offset = (pageNum - 1) * limitNum;
-
-    // Build WHERE clause
-    const conditions: string[] = ['school_id = $1'];
-    const values: any[] = [schoolId];
+    let sql = 'SELECT * FROM staff WHERE school_id = $1';
+    const params: any[] = [schoolId];
     let paramIndex = 2;
 
+    // Add search filter (name, employee_id, department)
     if (search) {
-      conditions.push(
-        `(name ILIKE $${paramIndex} OR employee_id ILIKE $${paramIndex} OR department ILIKE $${paramIndex})`
-      );
-      values.push(`%${search}%`);
+      sql += ` AND (name ILIKE $${paramIndex} OR employee_id ILIKE $${paramIndex} OR department ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
       paramIndex++;
     }
 
-    if (staff_type) {
-      conditions.push(`staff_type = $${paramIndex}`);
-      values.push(staff_type);
+    // Add staff_type filter
+    if (staffTypeFilter) {
+      sql += ` AND staff_type = $${paramIndex}`;
+      params.push(staffTypeFilter);
       paramIndex++;
     }
 
-    if (department) {
-      conditions.push(`department = $${paramIndex}`);
-      values.push(department);
+    // Add department filter
+    if (departmentFilter) {
+      sql += ` AND department = $${paramIndex}`;
+      params.push(departmentFilter);
       paramIndex++;
     }
 
-    const whereClause = conditions.join(' AND ');
-
-    // Get total count
-    const countSql = `SELECT COUNT(*) as count FROM staff WHERE ${whereClause}`;
-    const countResult = await executeQueryOne<{ count: string }>(
-      countSql,
-      values
-    );
-    const total = parseInt(countResult?.count || '0');
+    // Get total count (with caching to improve performance)
+    const forceRefresh = req.query.refresh === 'true';
+    const cacheKey = `staff_count_${schoolId}_${staffTypeFilter || 'all'}_${departmentFilter || 'all'}_${search || 'none'}`;
+    
+    let total: number;
+    if (!forceRefresh) {
+      const cachedCount = cache.get(cacheKey);
+      if (cachedCount !== null) {
+        total = cachedCount;
+      } else {
+        const countSql = sql.replace('SELECT *', 'SELECT COUNT(*)');
+        const countResult = await query(countSql, params);
+        total = parseInt(countResult.rows[0].count, 10);
+        cache.set(cacheKey, total);
+      }
+    } else {
+      // Force refresh - skip cache
+      const countSql = sql.replace('SELECT *', 'SELECT COUNT(*)');
+      const countResult = await query(countSql, params);
+      total = parseInt(countResult.rows[0].count, 10);
+      cache.set(cacheKey, total);
+    }
 
     // Get paginated data
-    const dataSql = `
-      SELECT * FROM staff
-      WHERE ${whereClause}
-      ORDER BY created_at DESC
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-    `;
-    const staff = await executeQuery(dataSql, [
-      ...values,
-      limitNum,
-      offset,
-    ]);
+    const offset = (page - 1) * limit;
+    sql += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(limit, offset);
 
-    res.status(200).json({
+    const result = await query(sql, params);
+
+    res.json({
       success: true,
-      data: staff,
-      pagination: {
-        total,
-        page: pageNum,
-        limit: limitNum,
-        pages: Math.ceil(total / limitNum),
-      },
+      data: result.rows,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
     });
   } catch (error) {
-    console.error('Get staff error:', error);
+    console.error('Get staff list error:', error);
     res.status(500).json({
       success: false,
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch staff',
-      },
+      error: { code: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch staff' },
     });
   }
 };
 
 /**
- * Get a single staff member by ID
- * GET /api/staff/:staffId
+ * Get a single staff member with ownership verification
  */
-export const getStaff = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
+export const getStaff = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const schoolId = req.user?.userId;
-    const { staffId } = req.params;
+    const staffId = req.params.staffId;
 
-    if (!schoolId) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'User not authenticated',
-        },
-      });
-      return;
-    }
-
-    if (!staffId) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'STAFF_ID_MISSING',
-          message: 'Staff ID is required',
-        },
-      });
-      return;
-    }
-
-    // Get staff and verify ownership
-    const sql = `
-      SELECT * FROM staff
-      WHERE id = $1 AND school_id = $2
-    `;
-    const staff = await executeQueryOne(sql, [staffId, schoolId]);
+    const staff = await findById('staff', staffId);
 
     if (!staff) {
       res.status(404).json({
         success: false,
-        error: {
-          code: 'STAFF_NOT_FOUND',
-          message: 'Staff member not found or does not belong to your school',
-        },
+        error: { code: 'STAFF_NOT_FOUND', message: 'Staff member not found' },
       });
       return;
     }
 
-    res.status(200).json({
+    // Verify staff belongs to school
+    if ((staff as any).school_id !== schoolId) {
+      res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Access denied' },
+      });
+      return;
+    }
+
+    res.json({
       success: true,
       data: staff,
     });
@@ -273,227 +179,104 @@ export const getStaff = async (
     console.error('Get staff error:', error);
     res.status(500).json({
       success: false,
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch staff member',
-      },
+      error: { code: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch staff' },
     });
   }
 };
 
 /**
- * Update a staff member
- * PUT /api/staff/:staffId
+ * Update a staff member with validation
  */
-export const updateStaff = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
+export const updateStaff = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const schoolId = req.user?.userId;
-    const { staffId } = req.params;
+    const staffId = req.params.staffId;
 
-    if (!schoolId) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'User not authenticated',
-        },
-      });
-      return;
-    }
-
-    if (!staffId) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'STAFF_ID_MISSING',
-          message: 'Staff ID is required',
-        },
-      });
-      return;
-    }
-
-    // Validate input
-    const validation = staffUpdateSchema.safeParse(req.body);
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Invalid input data',
-          details: validation.error.errors,
-        },
-      });
-      return;
-    }
-
-    const data: StaffUpdateInput = validation.data;
-
-    // Check if staff exists and belongs to school
-    const checkSql = `
-      SELECT id FROM staff
-      WHERE id = $1 AND school_id = $2
-    `;
-    const existingStaff = await executeQueryOne(checkSql, [
-      staffId,
-      schoolId,
-    ]);
-
-    if (!existingStaff) {
+    // Verify staff exists and belongs to school
+    const existing = await findById('staff', staffId);
+    if (!existing || (existing as any).school_id !== schoolId) {
       res.status(404).json({
         success: false,
-        error: {
-          code: 'STAFF_NOT_FOUND',
-          message: 'Staff member not found or does not belong to your school',
-        },
+        error: { code: 'STAFF_NOT_FOUND', message: 'Staff member not found' },
       });
       return;
     }
 
-    // Build UPDATE query dynamically
-    const updateFields: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
+    const validatedData = staffUpdateSchema.parse(req.body);
+    const updated = await updateById('staff', staffId, validatedData);
 
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined) {
-        updateFields.push(`${key} = $${paramIndex}`);
-        values.push(value);
-        paramIndex++;
-      }
+    res.json({
+      success: true,
+      data: updated,
     });
-
-    if (updateFields.length === 0) {
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
       res.status(400).json({
         success: false,
-        error: {
-          code: 'NO_UPDATE_DATA',
-          message: 'No data provided for update',
-        },
+        error: { code: 'VALIDATION_ERROR', message: 'Invalid input data', details: error.errors },
       });
       return;
     }
 
-    // Add updated_at
-    updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
-
-    // Add WHERE clause parameters
-    values.push(staffId, schoolId);
-
-    const updateSql = `
-      UPDATE staff
-      SET ${updateFields.join(', ')}
-      WHERE id = $${paramIndex} AND school_id = $${paramIndex + 1}
-      RETURNING *
-    `;
-
-    const updatedStaff = await executeQueryOne(updateSql, values);
-
-    res.status(200).json({
-      success: true,
-      data: updatedStaff,
-      message: 'Staff member updated successfully',
-    });
-  } catch (error) {
     console.error('Update staff error:', error);
     res.status(500).json({
       success: false,
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to update staff member',
-      },
+      error: { code: 'INTERNAL_SERVER_ERROR', message: 'Failed to update staff' },
     });
   }
 };
 
 /**
- * Delete a staff member
- * DELETE /api/staff/:staffId
+ * Delete a staff member with batch membership check
  */
-export const deleteStaff = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
+export const deleteStaff = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const schoolId = req.user?.userId;
-    const { staffId } = req.params;
+    const staffId = req.params.staffId;
 
-    if (!schoolId) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'User not authenticated',
-        },
-      });
-      return;
-    }
-
-    if (!staffId) {
-      res.status(400).json({
-        success: false,
-        error: {
-          code: 'STAFF_ID_MISSING',
-          message: 'Staff ID is required',
-        },
-      });
-      return;
-    }
-
-    // Check if staff exists and belongs to school
-    const checkSql = `
-      SELECT id FROM staff
-      WHERE id = $1 AND school_id = $2
-    `;
-    const existingStaff = await executeQueryOne(checkSql, [
-      staffId,
-      schoolId,
-    ]);
-
-    if (!existingStaff) {
+    // Verify staff exists and belongs to school
+    const existing = await findById('staff', staffId);
+    if (!existing || (existing as any).school_id !== schoolId) {
       res.status(404).json({
         success: false,
-        error: {
-          code: 'STAFF_NOT_FOUND',
-          message: 'Staff member not found or does not belong to your school',
-        },
+        error: { code: 'STAFF_NOT_FOUND', message: 'Staff member not found' },
       });
       return;
     }
 
-    // Check if staff is in any pending batches
+    // Check if staff is in any pending or processing batch
     const batchCheckSql = `
-      SELECT sm.id
+      SELECT DISTINCT sm.submission_id
       FROM submission_members sm
       JOIN batch_submissions bs ON sm.submission_id = bs.id
-      WHERE sm.member_type = 'staff'
-        AND sm.member_id = $1
+      WHERE sm.member_id = $1
+        AND sm.member_type = 'staff'
+        AND bs.school_id = $2
         AND bs.status IN ('submitted', 'processing')
-      LIMIT 1
     `;
-    const inBatch = await executeQueryOne(batchCheckSql, [staffId]);
+    const batchResult = await query(batchCheckSql, [staffId, schoolId]);
 
-    if (inBatch) {
+    if (batchResult.rows.length > 0) {
       res.status(409).json({
         success: false,
         error: {
           code: 'STAFF_IN_BATCH',
-          message: 'Cannot delete staff member who is in a pending batch submission',
+          message: 'Cannot delete staff member who is in a pending or processing batch',
         },
       });
       return;
     }
 
-    // Delete staff
-    const deleteSql = `
-      DELETE FROM staff
-      WHERE id = $1 AND school_id = $2
-    `;
-    await executeQuery(deleteSql, [staffId, schoolId]);
+    // Clear count cache for this school
+    cache.clear(`staff_count_${schoolId}_all_all_none`);
+    cache.clear(`staff_count_${schoolId}_${(existing as any).staff_type}_all_none`);
+    if ((existing as any).department) {
+      cache.clear(`staff_count_${schoolId}_${(existing as any).staff_type}_${(existing as any).department}_none`);
+    }
 
-    res.status(200).json({
+    await deleteById('staff', staffId);
+
+    res.json({
       success: true,
       message: 'Staff member deleted successfully',
     });
@@ -501,10 +284,7 @@ export const deleteStaff = async (
     console.error('Delete staff error:', error);
     res.status(500).json({
       success: false,
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to delete staff member',
-      },
+      error: { code: 'INTERNAL_SERVER_ERROR', message: 'Failed to delete staff' },
     });
   }
 };

@@ -11,7 +11,6 @@ import {
 } from '../validators/auth.js';
 import { School, Admin, AuthRequest } from '../types/index.js';
 import { generateOTP, sendVerificationOTP, sendWelcomeEmail } from '../services/email.js';
-import { logActivity } from '../utils/activity-logger.js';
 
 /**
  * Register a new school
@@ -53,20 +52,6 @@ export const registerSchool = async (req: Request, res: Response): Promise<void>
       verification_otp: null,
       otp_expires_at: null,
       otp_attempts: 0,
-    });
-
-    // Log registration activity
-    await logActivity({
-      schoolId: school.id,
-      activityType: 'profile_updated',
-      entityType: 'school',
-      description: `School registered: ${school.name}`,
-      metadata: {
-        schoolName: school.name,
-        email: school.email,
-        city: validatedData.city,
-        state: validatedData.state,
-      },
     });
 
     res.status(201).json({
@@ -154,18 +139,6 @@ export const loginSchool = async (req: Request, res: Response): Promise<void> =>
 
     // Return full school data (excluding sensitive fields)
     const { password_hash, verification_otp, reset_token, ...schoolData } = school as any;
-    
-    // Log login activity
-    await logActivity({
-      schoolId: school.id,
-      activityType: 'profile_updated',
-      entityType: 'school',
-      description: `School logged in: ${school.name}`,
-      metadata: {
-        schoolName: school.name,
-        email: school.email,
-      },
-    });
     
     res.json({
       success: true,

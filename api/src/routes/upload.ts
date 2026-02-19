@@ -5,6 +5,7 @@ import {
   uploadLogo,
   uploadSignature,
   uploadStudentPhoto,
+  uploadStaffPhoto,
 } from '../controllers/upload.js';
 
 const router = Router();
@@ -46,3 +47,15 @@ router.post(
 );
 
 export default router;
+
+/**
+ * @route   POST /api/staff/:staffId/photo
+ * @desc    Upload staff photo
+ * @access  Private (School)
+ */
+router.post(
+  '/staff/:staffId/photo',
+  ...authenticateSchool,
+  uploadSingle('photo'),
+  uploadStaffPhoto
+);

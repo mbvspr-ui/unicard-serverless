@@ -66,23 +66,45 @@ export const downloadBatchCSV = async (
     // Get students in this batch
     const studentsSql = `
       SELECT 
+        'Student' as type,
         s.name, s.father_name, s.mother_name, s.class, s.section,
-        s.roll_number, s.student_id, s.date_of_birth, s.gender,
+        s.roll_number, s.student_id as id_number, s.date_of_birth, s.gender,
         s.phone_number, s.blood_group, s.address, s.state,
-        s.district, s.city, s.pincode, s.photo_url
+        s.district, s.city, s.pincode, s.photo_url,
+        NULL as designation, NULL as department, NULL as employee_id
       FROM students s
-      JOIN submission_students ss ON s.id = ss.student_id
-      WHERE ss.submission_id = $1
+      JOIN submission_members sm ON s.id = sm.member_id
+      WHERE sm.submission_id = $1 AND sm.member_type = 'student'
       ORDER BY s.class, s.section, s.roll_number, s.name
     `;
     const students = await executeQuery<any>(studentsSql, [batchId]);
 
-    if (students.length === 0) {
+    // Get staff in this batch
+    const staffSql = `
+      SELECT 
+        'Staff' as type,
+        st.name, st.father_spouse_name as father_name, NULL as mother_name,
+        NULL as class, NULL as section, NULL as roll_number,
+        st.employee_id as id_number, st.date_of_birth, st.gender,
+        st.phone_number, st.blood_group, st.address, st.state,
+        st.district, st.city, st.pincode, st.photo_url,
+        st.designation, st.department, st.employee_id
+      FROM staff st
+      JOIN submission_members sm ON st.id = sm.member_id
+      WHERE sm.submission_id = $1 AND sm.member_type = 'staff'
+      ORDER BY st.name
+    `;
+    const staff = await executeQuery<any>(staffSql, [batchId]);
+
+    // Combine students and staff
+    const allMembers = [...students, ...staff];
+
+    if (allMembers.length === 0) {
       res.status(404).json({
         success: false,
         error: {
-          code: 'NO_STUDENTS',
-          message: 'No students found in this batch',
+          code: 'NO_MEMBERS',
+          message: 'No members found in this batch',
         },
       });
       return;
@@ -97,13 +119,16 @@ export const downloadBatchCSV = async (
     const csvWriter = createObjectCsvWriter({
       path: filepath,
       header: [
-        { id: 'name', title: 'Student Name' },
-        { id: 'father_name', title: 'Father Name' },
+        { id: 'type', title: 'Type' },
+        { id: 'name', title: 'Name' },
+        { id: 'father_name', title: 'Father/Spouse Name' },
         { id: 'mother_name', title: 'Mother Name' },
         { id: 'class', title: 'Class' },
         { id: 'section', title: 'Section' },
         { id: 'roll_number', title: 'Roll Number' },
-        { id: 'student_id', title: 'Student ID' },
+        { id: 'id_number', title: 'Student ID / Employee ID' },
+        { id: 'designation', title: 'Designation' },
+        { id: 'department', title: 'Department' },
         { id: 'date_of_birth', title: 'Date of Birth' },
         { id: 'gender', title: 'Gender' },
         { id: 'phone_number', title: 'Phone Number' },
@@ -117,22 +142,22 @@ export const downloadBatchCSV = async (
     });
 
     // Format data for CSV
-    const formattedStudents = students.map(student => ({
-      ...student,
+    const formattedMembers = allMembers.map(member => ({
+      ...member,
       // Format date as DD/MM/YYYY
-      date_of_birth: student.date_of_birth 
-        ? new Date(student.date_of_birth).toLocaleDateString('en-GB', {
+      date_of_birth: member.date_of_birth 
+        ? new Date(member.date_of_birth).toLocaleDateString('en-GB', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
           })
         : '',
       // Format phone number as text to prevent scientific notation
-      phone_number: student.phone_number ? `'${student.phone_number}` : '',
+      phone_number: member.phone_number ? `'${member.phone_number}` : '',
     }));
 
     // Write CSV
-    await csvWriter.writeRecords(formattedStudents);
+    await csvWriter.writeRecords(formattedMembers);
 
     // Set response headers
     res.setHeader('Content-Type', 'text/csv');
@@ -158,6 +183,160 @@ export const downloadBatchCSV = async (
       error: {
         code: 'EXPORT_ERROR',
         message: 'Failed to generate CSV export',
+      },
+    });
+  }
+};
+
+/**
+ * Download staff data as CSV
+ * GET /api/admin/batches/:batchId/staff-csv
+ */
+export const downloadStaffCSV = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { batchId } = req.params;
+
+    if (!batchId) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'BATCH_ID_MISSING',
+          message: 'Batch ID is required',
+        },
+      });
+      return;
+    }
+
+    // Get batch and verify it exists
+    const batchSql = `
+      SELECT bs.*, s.name as school_name
+      FROM batch_submissions bs
+      JOIN schools s ON bs.school_id = s.id
+      WHERE bs.id = $1
+    `;
+    const batch = await executeQueryOne<any>(batchSql, [batchId]);
+
+    if (!batch) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'BATCH_NOT_FOUND',
+          message: 'Batch submission not found',
+        },
+      });
+      return;
+    }
+
+    // Get staff in this batch
+    const staffSql = `
+      SELECT 
+        'Staff' as type,
+        st.name, st.father_spouse_name, st.date_of_birth, st.gender,
+        st.phone_number, st.blood_group, st.address, st.state,
+        st.district, st.city, st.pincode,
+        st.designation, st.department, st.employee_id, st.staff_type,
+        st.date_of_joining, st.qualification, st.experience_years
+      FROM staff st
+      JOIN submission_members sm ON st.id = sm.member_id
+      WHERE sm.submission_id = $1 AND sm.member_type = 'staff'
+      ORDER BY st.name
+    `;
+    const staff = await executeQuery<any>(staffSql, [batchId]);
+
+    if (staff.length === 0) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NO_STAFF',
+          message: 'No staff found in this batch',
+        },
+      });
+      return;
+    }
+
+    // Create temporary file path
+    const tempDir = os.tmpdir();
+    const filename = `batch_${batchId}_staff_${Date.now()}.csv`;
+    const filepath = path.join(tempDir, filename);
+
+    // Create CSV writer
+    const csvWriter = createObjectCsvWriter({
+      path: filepath,
+      header: [
+        { id: 'type', title: 'Type' },
+        { id: 'name', title: 'Name' },
+        { id: 'father_spouse_name', title: 'Father/Spouse Name' },
+        { id: 'employee_id', title: 'Employee ID' },
+        { id: 'staff_type', title: 'Staff Type' },
+        { id: 'designation', title: 'Designation' },
+        { id: 'department', title: 'Department' },
+        { id: 'date_of_birth', title: 'Date of Birth' },
+        { id: 'gender', title: 'Gender' },
+        { id: 'phone_number', title: 'Phone Number' },
+        { id: 'blood_group', title: 'Blood Group' },
+        { id: 'address', title: 'Address' },
+        { id: 'state', title: 'State' },
+        { id: 'district', title: 'District' },
+        { id: 'city', title: 'City' },
+        { id: 'pincode', title: 'Pincode' },
+        { id: 'date_of_joining', title: 'Date of Joining' },
+        { id: 'qualification', title: 'Qualification' },
+        { id: 'experience_years', title: 'Experience (Years)' },
+      ],
+    });
+
+    // Format data for CSV
+    const formattedStaff = staff.map(member => ({
+      ...member,
+      // Format dates as DD/MM/YYYY
+      date_of_birth: member.date_of_birth 
+        ? new Date(member.date_of_birth).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          })
+        : '',
+      date_of_joining: member.date_of_joining 
+        ? new Date(member.date_of_joining).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          })
+        : '',
+      // Format phone number as text to prevent scientific notation
+      phone_number: member.phone_number ? `'${member.phone_number}` : '',
+    }));
+
+    // Write CSV
+    await csvWriter.writeRecords(formattedStaff);
+
+    // Set response headers
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="batch_${batch.school_name}_staff_${batchId}.csv"`
+    );
+
+    // Stream file to response
+    const fileStream = fs.createReadStream(filepath);
+    fileStream.pipe(res);
+
+    // Clean up temp file after streaming
+    fileStream.on('end', () => {
+      fs.unlink(filepath, (err) => {
+        if (err) console.error('Error deleting temp CSV file:', err);
+      });
+    });
+  } catch (error) {
+    console.error('Download staff CSV error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'EXPORT_ERROR',
+        message: 'Failed to generate staff CSV export',
       },
     });
   }
@@ -211,13 +390,23 @@ export const downloadBatchPhotos = async (
 
     // Get students with photos
     const studentsSql = `
-      SELECT s.id, s.name, s.student_id, s.roll_number, s.photo_url
+      SELECT s.id, s.name, s.student_id, s.roll_number, s.photo_url, 'student' as member_type
       FROM students s
-      JOIN submission_students ss ON s.id = ss.student_id
-      WHERE ss.submission_id = $1 AND s.photo_url IS NOT NULL
+      JOIN submission_members sm ON s.id = sm.member_id
+      WHERE sm.submission_id = $1 AND sm.member_type = 'student' AND s.photo_url IS NOT NULL
       ORDER BY s.name
     `;
     const students = await executeQuery<any>(studentsSql, [batchId]);
+
+    // Get staff with photos
+    const staffSql = `
+      SELECT st.id, st.name, st.employee_id, st.designation, st.photo_url, 'staff' as member_type
+      FROM staff st
+      JOIN submission_members sm ON st.id = sm.member_id
+      WHERE sm.submission_id = $1 AND sm.member_type = 'staff' AND st.photo_url IS NOT NULL
+      ORDER BY st.name
+    `;
+    const staff = await executeQuery<any>(staffSql, [batchId]);
 
     // Set response headers
     res.setHeader('Content-Type', 'application/zip');
@@ -311,6 +500,22 @@ export const downloadBatchPhotos = async (
       }
     }
 
+    // Add staff photos
+    for (const staffMember of staff) {
+      try {
+        if (staffMember.photo_url) {
+          const photoBuffer = await downloadFromR2(staffMember.photo_url);
+          const filename = `${staffMember.employee_id || staffMember.id}_${staffMember.name.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+          archive.append(photoBuffer, { name: `staff-photos/${filename}` });
+          successCount++;
+        }
+      } catch (error) {
+        console.error(`Error adding photo for staff ${staffMember.id}:`, error);
+        failCount++;
+        // Continue with other photos
+      }
+    }
+
     // Add a summary file
     const summary = `Batch Export Summary
 =====================
@@ -318,6 +523,7 @@ Batch ID: ${batchId}
 School: ${batch.school_name}
 Export Date: ${new Date().toISOString()}
 Total Students: ${students.length}
+Total Staff: ${staff.length}
 Photos Included: ${successCount}
 Photos Failed: ${failCount}
 `;

@@ -21,7 +21,14 @@ app.use(cors({
         'https://school.unicard-serverless.com',
         'https://admin.unicard-serverless.com'
       ]
-    : ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:5173'],
+    : [
+        'http://localhost:3000', 
+        'http://localhost:3002', 
+        'http://localhost:3003',
+        'http://localhost:3004',
+        'http://localhost:3005',
+        'http://localhost:5173'
+      ],
   credentials: true,
 }));
 app.use(express.json());
@@ -45,8 +52,7 @@ import staffRoutes from './routes/staff.js';
 import batchRoutes from './routes/batch.js';
 import adminRoutes from './routes/admin.js';
 import schoolRoutes from './routes/schools.js';
-import activityRoutes from './routes/activity.js';
-import debugRoutes from './routes/debug.js';
+import proxyRoutes from './routes/proxy.js';
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -66,8 +72,7 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/batches', batchRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/schools', schoolRoutes);
-app.use('/api/activities', activityRoutes);
-app.use('/api/debug', debugRoutes);
+app.use('/api/proxy', proxyRoutes);
 
 // 404 handler
 app.use((req, res) => {

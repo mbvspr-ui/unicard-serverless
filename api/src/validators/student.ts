@@ -30,6 +30,7 @@ export const studentSchema = z.object({
     .string()
     .regex(pincodeRegex, 'Pincode must be exactly 6 digits')
     .min(1, 'Pincode is required'),
+  photo_url: z.string().optional(),
 });
 
 // Partial schema for updates (all fields optional except required ones)

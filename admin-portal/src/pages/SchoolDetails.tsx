@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Image as ImageIcon, Activity, Users, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, Image as ImageIcon, Users, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
 
@@ -21,6 +21,7 @@ interface School {
   created_at: string;
   updated_at: string;
   studentCount?: number;
+  staffCount?: number;
   batchCount?: number;
 }
 
@@ -29,14 +30,6 @@ interface OrderHistory {
   status: string;
   submitted_at: string;
   student_count: number;
-}
-
-interface Activity {
-  id: string;
-  activity_type: string;
-  entity_type: string;
-  description: string;
-  created_at: string;
 }
 
 interface Student {
@@ -51,6 +44,17 @@ interface Student {
   created_at: string;
 }
 
+interface Staff {
+  id: string;
+  name: string;
+  staff_type: string;
+  designation: string;
+  department: string;
+  employee_id: string;
+  photo_url: string | null;
+  created_at: string;
+}
+
 export default function SchoolDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -59,17 +63,20 @@ export default function SchoolDetails() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [orderHistory, setOrderHistory] = useState<OrderHistory[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [isLoadingActivities, setIsLoadingActivities] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
   const [showStudents, setShowStudents] = useState(false);
+  const [staff, setStaff] = useState<Staff[]>([]);
+  const [isLoadingStaff, setIsLoadingStaff] = useState(false);
+  const [showStaff, setShowStaff] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchSchoolDetails();
     fetchOrderHistory();
-    fetchActivities();
     fetchStudents();
+    fetchStaff();
   }, [id]);
 
   const fetchSchoolDetails = async () => {
@@ -119,29 +126,6 @@ export default function SchoolDetails() {
     }
   };
 
-  const fetchActivities = async () => {
-    setIsLoadingActivities(true);
-    try {
-      const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${API_URL}/api/admin/schools/${id}/activity?limit=20`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch activities');
-      }
-
-      const data = await response.json();
-      setActivities(data.data || []);
-    } catch (error: any) {
-      console.error('Failed to load activities:', error);
-    } finally {
-      setIsLoadingActivities(false);
-    }
-  };
-
   const fetchStudents = async () => {
     setIsLoadingStudents(true);
     try {
@@ -162,6 +146,57 @@ export default function SchoolDetails() {
       console.error('Failed to load students:', error);
     } finally {
       setIsLoadingStudents(false);
+    }
+  };
+
+  const fetchStaff = async () => {
+    setIsLoadingStaff(true);
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch(`${API_URL}/api/admin/schools/${id}/staff?limit=100`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch staff');
+      }
+
+      const data = await response.json();
+      setStaff(data.data || []);
+    } catch (error: any) {
+      console.error('Failed to load staff:', error);
+    } finally {
+      setIsLoadingStaff(false);
+    }
+  };
+
+  const handleDeleteSchool = async () => {
+    if (!school) return;
+    
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch(`${API_URL}/api/admin/schools/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Failed to delete school');
+      }
+
+      toast.success('School and all associated data deleted successfully');
+      navigate('/schools');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete school');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -202,7 +237,7 @@ export default function SchoolDetails() {
       <div className="p-4 space-y-4">
         {/* Statistics */}
         {(
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total Students</CardTitle>
@@ -210,6 +245,15 @@ export default function SchoolDetails() {
               <CardContent>
                 <p className="text-3xl font-bold text-blue-600">{school.studentCount || 0}</p>
                 <p className="text-xs text-muted-foreground mt-1">Registered students</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Staff</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-purple-600">{school.staffCount || 0}</p>
+                <p className="text-xs text-muted-foreground mt-1">Staff members</p>
               </CardContent>
             </Card>
             <Card>
@@ -340,42 +384,6 @@ export default function SchoolDetails() {
           </Card>
         )}
 
-        {/* Recent Activity */}
-        {activities.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Activity className="w-5 h-5" />
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingActivities ? (
-                <div className="flex justify-center py-4">
-                  <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {activities.slice(0, 10).map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                    >
-                      <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{activity.description}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {activity.activity_type} • {new Date(activity.created_at).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
         {/* Students */}
         {students.length > 0 && (
           <Card>
@@ -446,6 +454,75 @@ export default function SchoolDetails() {
           </Card>
         )}
 
+        {/* Staff */}
+        {staff.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Staff ({staff.length})
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowStaff(!showStaff)}
+                  className="min-h-[44px]"
+                >
+                  {showStaff ? (
+                    <>
+                      <ChevronUp className="w-4 h-4 mr-2" />
+                      Hide
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-4 h-4 mr-2" />
+                      Show
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            {showStaff && (
+              <CardContent>
+                {isLoadingStaff ? (
+                  <div className="flex justify-center py-4">
+                    <div className="w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {staff.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg"
+                      >
+                        <div className="w-12 h-12 bg-purple-200 dark:bg-purple-700 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {member.photo_url ? (
+                            <img
+                              src={member.photo_url}
+                              alt={member.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Users className="w-6 h-6 text-purple-400" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate text-sm">{member.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {member.designation}
+                            {member.department && ` | ${member.department}`}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+        )}
+
         {/* Assets */}
         <Card>
           <CardHeader>
@@ -500,7 +577,76 @@ export default function SchoolDetails() {
           </CardContent>
         </Card>
 
+        {/* Danger Zone */}
+        <Card className="border-red-200 dark:border-red-900">
+          <CardHeader>
+            <CardTitle className="text-lg text-red-600 dark:text-red-400">Danger Zone</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Deleting this school will permanently remove all associated data including students, staff, and batch submissions. This action cannot be undone.
+            </p>
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+              className="w-full min-h-[48px]"
+            >
+              <Trash2 className="w-5 h-5 mr-2" />
+              Delete School
+            </Button>
+          </CardContent>
+        </Card>
+
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete School</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{school?.name}"? This will permanently remove:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>{school?.studentCount || 0} students</li>
+                <li>{school?.staffCount || 0} staff members</li>
+                <li>{school?.batchCount || 0} batch submissions</li>
+                <li>All associated photos and documents</li>
+              </ul>
+              <p className="mt-3 font-semibold text-red-600 dark:text-red-400">
+                This action cannot be undone!
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteSchool}
+              disabled={isDeleting}
+              className="w-full sm:w-auto"
+            >
+              {isDeleting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Permanently
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Image Zoom Dialog */}
       <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>

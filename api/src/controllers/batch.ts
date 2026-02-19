@@ -7,7 +7,6 @@ import {
   batchListQuerySchema,
   BatchSubmissionInput,
 } from '../validators/batch.js';
-import { logActivity } from '../utils/activity-logger.js';
 
 /**
  * Create a new batch submission
@@ -87,10 +86,10 @@ export const createBatchSubmission = async (
     // Verify all students belong to this school (if any)
     if (studentIds && studentIds.length > 0) {
       const checkSql = `
-        SELECT id FROM students
+        SELECT id, photo_url FROM students
         WHERE id = ANY($1::uuid[]) AND school_id = $2
       `;
-      const validStudents = await executeQuery<{ id: string }>(checkSql, [
+      const validStudents = await executeQuery<{ id: string; photo_url: string | null }>(checkSql, [
         studentIds,
         schoolId,
       ]);
@@ -105,15 +104,32 @@ export const createBatchSubmission = async (
         });
         return;
       }
+
+      // Check if all students have photos
+      const studentsWithoutPhotos = validStudents.filter(s => !s.photo_url);
+      if (studentsWithoutPhotos.length > 0) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'MISSING_STUDENT_PHOTOS',
+            message: 'All students must have photos before submitting for printing',
+            details: {
+              studentsWithoutPhotos: studentsWithoutPhotos.map(s => s.id),
+              count: studentsWithoutPhotos.length,
+            },
+          },
+        });
+        return;
+      }
     }
 
     // Verify all staff belong to this school (if any)
     if (staffIds && staffIds.length > 0) {
       const checkSql = `
-        SELECT id FROM staff
+        SELECT id, photo_url FROM staff
         WHERE id = ANY($1::uuid[]) AND school_id = $2
       `;
-      const validStaff = await executeQuery<{ id: string }>(checkSql, [
+      const validStaff = await executeQuery<{ id: string; photo_url: string | null }>(checkSql, [
         staffIds,
         schoolId,
       ]);
@@ -124,6 +140,23 @@ export const createBatchSubmission = async (
           error: {
             code: 'INVALID_STAFF',
             message: 'Some staff members do not belong to your school or do not exist',
+          },
+        });
+        return;
+      }
+
+      // Check if all staff have photos
+      const staffWithoutPhotos = validStaff.filter(s => !s.photo_url);
+      if (staffWithoutPhotos.length > 0) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'MISSING_STAFF_PHOTOS',
+            message: 'All staff members must have photos before submitting for printing',
+            details: {
+              staffWithoutPhotos: staffWithoutPhotos.map(s => s.id),
+              count: staffWithoutPhotos.length,
+            },
           },
         });
         return;
@@ -225,20 +258,6 @@ export const createBatchSubmission = async (
 
       // Commit transaction
       await query('COMMIT');
-
-      // Log activity
-      await logActivity({
-        schoolId,
-        activityType: 'batch_submitted',
-        entityType: 'batch',
-        entityId: batch.id,
-        description: `Submitted batch with ${studentIds?.length || 0} student${(studentIds?.length || 0) !== 1 ? 's' : ''} and ${staffIds?.length || 0} staff member${(staffIds?.length || 0) !== 1 ? 's' : ''}`,
-        metadata: {
-          studentCount: studentIds?.length || 0,
-          staffCount: staffIds?.length || 0,
-          batchId: batch.id,
-        },
-      });
 
       res.status(201).json({
         success: true,

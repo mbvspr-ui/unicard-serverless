@@ -1,34 +1,32 @@
-<svg width="150" height="150" viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background Circle -->
-  <circle cx="75" cy="75" r="70" fill="url(#gradient1)" />
-  
-  <!-- Gradient Definition -->
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Modern gradient background -->
   <defs>
-    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#4f46e5;stop-opacity:1" />
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#EC4899;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
     </linearGradient>
   </defs>
   
-  <!-- Letter U -->
-  <path d="M 45 40 L 45 75 Q 45 95 60 95 L 65 95 Q 80 95 80 75 L 80 40" 
-        stroke="white" 
-        stroke-width="8" 
-        fill="none" 
-        stroke-linecap="round" 
-        stroke-linejoin="round"/>
+  <!-- Icon: Modern "SG" monogram -->
+  <g transform="translate(10, 10)">
+    <!-- S shape -->
+    <path d="M 15 5 Q 5 5 5 12 Q 5 19 15 19 Q 25 19 25 26 Q 25 33 15 33 Q 5 33 5 26" 
+          stroke="url(#grad1)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    
+    <!-- G shape -->
+    <path d="M 35 33 Q 35 40 45 40 Q 55 40 55 33 L 55 12 Q 55 5 45 5 Q 35 5 35 12 L 35 20 L 45 20" 
+          stroke="url(#grad2)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
   
-  <!-- Letter C -->
-  <path d="M 110 55 Q 95 40 80 55 L 80 85 Q 95 100 110 85" 
-        stroke="white" 
-        stroke-width="8" 
-        fill="none" 
-        stroke-linecap="round" 
-        stroke-linejoin="round"/>
-  
-  <!-- Decorative Elements - Stars -->
-  <circle cx="30" cy="30" r="3" fill="white" opacity="0.8"/>
-  <circle cx="120" cy="30" r="3" fill="white" opacity="0.8"/>
-  <circle cx="30" cy="120" r="3" fill="white" opacity="0.8"/>
-  <circle cx="120" cy="120" r="3" fill="white" opacity="0.8"/>
+  <!-- Text: SAMIUL GRAPHICS -->
+  <text x="75" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#1F2937">
+    SAMIUL
+  </text>
+  <text x="75" y="43" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#6B7280">
+    GRAPHICS
+  </text>
 </svg>

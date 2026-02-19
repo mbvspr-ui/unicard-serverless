@@ -16,6 +16,7 @@ import {
   loadImage,
   loadImageFromFile,
 } from '../utils/imageProcessing';
+import { getProxiedImageUrl } from '../utils/imageProxy';
 
 const BG_REMOVAL_URL = import.meta.env.VITE_BG_REMOVAL_URL || 'http://localhost:5000';
 
@@ -60,15 +61,19 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
   
   useEffect(() => {
     if (initialImage) {
-      loadImage(initialImage)
-        .then((img) => {
-          setImage(img);
-          setOriginalImage(img);
-        })
-        .catch((error) => {
-          console.error('Failed to load initial image:', error);
-          toast.error('Failed to load image');
-        });
+      // Use proxied URL to avoid CORS issues
+      const proxiedUrl = getProxiedImageUrl(initialImage);
+      if (proxiedUrl) {
+        loadImage(proxiedUrl)
+          .then((img) => {
+            setImage(img);
+            setOriginalImage(img);
+          })
+          .catch((error) => {
+            console.error('Failed to load initial image:', error);
+            toast.error('Failed to load image. The image may not be accessible.');
+          });
+      }
     }
   }, [initialImage]);
 
@@ -553,19 +558,21 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Hidden file input - always rendered */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
           {/* Upload/Camera Controls */}
           {!image && !isCameraActive && (
             <div className="flex flex-col gap-3 p-4">
               <p className="text-sm text-gray-600 text-center mb-2">
                 Upload a photo or take one with your camera to get started
               </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
@@ -747,9 +754,15 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
                   </div>
                   <Button
                     onClick={() => {
+                      console.log('Change Photo clicked');
+                      console.log('fileInputRef.current:', fileInputRef.current);
                       if (fileInputRef.current) {
                         fileInputRef.current.value = ''; // Reset input to allow selecting same file
                         fileInputRef.current.click();
+                        console.log('File input clicked');
+                      } else {
+                        console.error('fileInputRef.current is null');
+                        toast.error('File input not ready. Please try again.');
                       }
                     }}
                     variant="outline"

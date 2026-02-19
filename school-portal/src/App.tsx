@@ -1,32 +1,34 @@
-// MAINTENANCE MODE - Uncomment below to disable maintenance
-// import { lazy, Suspense } from 'react'
-// import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-// import { Toaster } from 'sonner'
-// import { AuthProvider } from './contexts/AuthContext'
-// import { ProtectedRoute } from './components/auth/ProtectedRoute'
-// import { BottomNav } from './components/BottomNav'
-// import { ErrorBoundary } from './components/ErrorBoundary'
-// import { LoadingSpinner } from './components/ui/loading-spinner'
-// import { SessionExpiryWarning } from './components/SessionExpiryWarning'
+import { lazy, Suspense } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Toaster } from 'sonner'
+import { AuthProvider } from './contexts/AuthContext'
+import { ProtectedRoute } from './components/auth/ProtectedRoute'
+import { BottomNav } from './components/BottomNav'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { LoadingSpinner } from './components/ui/loading-spinner'
+import { SessionExpiryWarning } from './components/SessionExpiryWarning'
+import InstallPrompt from './components/InstallPrompt'
+import OfflineIndicator from './components/OfflineIndicator'
 
-// Maintenance mode
-import Maintenance from './pages/Maintenance'
+// Maintenance mode - uncomment below to enable
+// import Maintenance from './pages/Maintenance'
 
 // Lazy load pages for better performance
-// const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })))
-// const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.Register })))
-// const VerifyEmail = lazy(() => import('./pages/VerifyEmail'))
-// const ChangePassword = lazy(() => import('./pages/ChangePassword'))
-// const Dashboard = lazy(() => import('./pages/Dashboard'))
-// const AddStudent = lazy(() => import('./pages/AddStudent'))
-// const StudentList = lazy(() => import('./pages/StudentList'))
-// const EditStudent = lazy(() => import('./pages/EditStudent'))
-// const AddStaff = lazy(() => import('./pages/AddStaff'))
-// const StaffList = lazy(() => import('./pages/StaffList'))
-// const EditStaff = lazy(() => import('./pages/EditStaff'))
-// const SubmissionHistory = lazy(() => import('./pages/SubmissionHistory'))
-// const SubmissionDetail = lazy(() => import('./pages/SubmissionDetail'))
-// const Profile = lazy(() => import('./pages/Profile'))
+const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })))
+const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.Register })))
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'))
+const ChangePassword = lazy(() => import('./pages/ChangePassword'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const AddStudent = lazy(() => import('./pages/AddStudent'))
+const StudentList = lazy(() => import('./pages/StudentList'))
+const EditStudent = lazy(() => import('./pages/EditStudent'))
+const AddStaff = lazy(() => import('./pages/AddStaff'))
+const StaffList = lazy(() => import('./pages/StaffList'))
+const EditStaff = lazy(() => import('./pages/EditStaff'))
+const BatchSubmission = lazy(() => import('./pages/BatchSubmission'))
+const SubmissionHistory = lazy(() => import('./pages/SubmissionHistory'))
+const SubmissionDetail = lazy(() => import('./pages/SubmissionDetail'))
+const Profile = lazy(() => import('./pages/Profile'))
 
 // Loading fallback component
 function PageLoader() {
@@ -118,6 +120,14 @@ function AppContent() {
           }
         />
         <Route
+          path="/batch-submission"
+          element={
+            <ProtectedRoute>
+              <BatchSubmission />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/submissions"
           element={
             <ProtectedRoute>
@@ -144,27 +154,28 @@ function AppContent() {
         </Routes>
       </Suspense>
       {showBottomNav && <BottomNav />}
+      <InstallPrompt />
+      <OfflineIndicator />
       <Toaster position="top-center" richColors />
     </>
   );
 }
 
 function App() {
-  // MAINTENANCE MODE ACTIVE
-  return <Maintenance />
+  // MAINTENANCE MODE - Uncomment below to enable
+  // return <Maintenance />
   
-  // Uncomment below to disable maintenance mode
-  // return (
-  //   <ErrorBoundary>
-  //     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-  //       <AuthProvider>
-  //         <div className="min-h-screen bg-background">
-  //           <AppContent />
-  //         </div>
-  //       </AuthProvider>
-  //     </Router>
-  //   </ErrorBoundary>
-  // )
+  return (
+    <ErrorBoundary>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AuthProvider>
+          <div className="min-h-screen bg-background">
+            <AppContent />
+          </div>
+        </AuthProvider>
+      </Router>
+    </ErrorBoundary>
+  )
 }
 
 export default App

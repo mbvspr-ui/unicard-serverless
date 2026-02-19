@@ -66,15 +66,11 @@ export const Login = () => {
         <CardHeader className="space-y-4">
           {/* Samiul Graphics Logo and Branding */}
           <div className="flex flex-col items-center space-y-3">
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+            <div className="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center p-3 shadow-lg">
               <img 
-                src="/samiul-graphics-logo.png" 
+                src="/samiul-graphics-logo.svg" 
                 alt="Samiul Graphics Logo" 
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Fallback to SVG logo
-                  e.currentTarget.src = '/samiul-graphics-logo.svg';
-                }}
+                className="w-full h-full object-contain"
               />
             </div>
             <div className="text-center">

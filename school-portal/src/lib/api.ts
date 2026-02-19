@@ -275,13 +275,6 @@ export const schoolApi = {
   },
 };
 
-// Activity APIs
-export const activityApi = {
-  getRecent: async (limit: number = 10): Promise<ApiResponse<any[]>> => {
-    return fetchWithAuth(`/api/activities?limit=${limit}`);
-  },
-};
-
 // Batch APIs
 export const batchApi = {
   create: async (params: {

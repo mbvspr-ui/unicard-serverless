@@ -66,9 +66,17 @@ export const RECOMMENDED_INDEXES = {
     'CREATE INDEX IF NOT EXISTS idx_batch_submissions_status ON batch_submissions(status)',
     'CREATE INDEX IF NOT EXISTS idx_batch_submissions_submitted_at ON batch_submissions(submitted_at DESC)',
   ],
-  submission_students: [
-    'CREATE INDEX IF NOT EXISTS idx_submission_students_submission_id ON submission_students(submission_id)',
-    'CREATE INDEX IF NOT EXISTS idx_submission_students_student_id ON submission_students(student_id)',
+  submission_members: [
+    'CREATE INDEX IF NOT EXISTS idx_submission_members_submission_id ON submission_members(submission_id)',
+    'CREATE INDEX IF NOT EXISTS idx_submission_members_member_id ON submission_members(member_id)',
+    'CREATE INDEX IF NOT EXISTS idx_submission_members_member_type ON submission_members(member_type)',
+  ],
+  staff: [
+    'CREATE INDEX IF NOT EXISTS idx_staff_school_id ON staff(school_id)',
+    'CREATE INDEX IF NOT EXISTS idx_staff_staff_type ON staff(staff_type)',
+    'CREATE INDEX IF NOT EXISTS idx_staff_department ON staff(department)',
+    'CREATE INDEX IF NOT EXISTS idx_staff_name ON staff(name)',
+    'CREATE INDEX IF NOT EXISTS idx_staff_created_at ON staff(created_at DESC)',
   ],
 };
 

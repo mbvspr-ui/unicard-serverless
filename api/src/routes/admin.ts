@@ -4,17 +4,20 @@ import {
   getAllSchools,
   getSchoolById,
   updateSchoolStatus,
+  deleteSchool,
   getAllBatches,
   getAdminBatchDetails,
   updateBatchStatus,
   getAnalytics,
-  getSchoolActivity,
+  getStaffAnalytics,
   getSchoolStudents,
+  getSchoolStaff,
   getAuditLog,
 } from '../controllers/admin.js';
 import {
   downloadBatchCSV,
   downloadBatchPhotos,
+  downloadStaffCSV,
 } from '../controllers/export.js';
 
 const router = Router();
@@ -41,6 +44,13 @@ router.get('/schools/:schoolId', authenticateAdmin, getSchoolById);
 router.put('/schools/:schoolId/status', authenticateAdmin, updateSchoolStatus);
 
 /**
+ * @route   DELETE /api/admin/schools/:schoolId
+ * @desc    Delete school and all associated data
+ * @access  Private (Admin)
+ */
+router.delete('/schools/:schoolId', authenticateAdmin, deleteSchool);
+
+/**
  * @route   GET /api/admin/batches
  * @desc    Get list of all batch submissions
  * @access  Private (Admin)
@@ -60,6 +70,13 @@ router.get('/batches/:batchId', authenticateAdmin, getAdminBatchDetails);
  * @access  Private (Admin)
  */
 router.get('/batches/:batchId/csv', authenticateAdmin, downloadBatchCSV);
+
+/**
+ * @route   GET /api/admin/batches/:batchId/staff-csv
+ * @desc    Download staff data as CSV
+ * @access  Private (Admin)
+ */
+router.get('/batches/:batchId/staff-csv', authenticateAdmin, downloadStaffCSV);
 
 /**
  * @route   GET /api/admin/batches/:batchId/photos
@@ -83,11 +100,11 @@ router.put('/batches/:batchId/status', authenticateAdmin, updateBatchStatus);
 router.get('/analytics', authenticateAdmin, getAnalytics);
 
 /**
- * @route   GET /api/admin/schools/:schoolId/activity
- * @desc    Get school activity log
+ * @route   GET /api/admin/analytics/staff
+ * @desc    Get staff analytics data
  * @access  Private (Admin)
  */
-router.get('/schools/:schoolId/activity', authenticateAdmin, getSchoolActivity);
+router.get('/analytics/staff', authenticateAdmin, getStaffAnalytics);
 
 /**
  * @route   GET /api/admin/schools/:schoolId/students
@@ -95,6 +112,13 @@ router.get('/schools/:schoolId/activity', authenticateAdmin, getSchoolActivity);
  * @access  Private (Admin)
  */
 router.get('/schools/:schoolId/students', authenticateAdmin, getSchoolStudents);
+
+/**
+ * @route   GET /api/admin/schools/:schoolId/staff
+ * @desc    Get school staff
+ * @access  Private (Admin)
+ */
+router.get('/schools/:schoolId/staff', authenticateAdmin, getSchoolStaff);
 
 /**
  * @route   GET /api/admin/audit-log

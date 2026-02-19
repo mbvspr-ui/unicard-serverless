@@ -18,6 +18,16 @@ interface Student {
   photo_url: string | null;
 }
 
+interface Staff {
+  id: string;
+  name: string;
+  staff_type: string;
+  designation: string;
+  department: string;
+  employee_id: string;
+  photo_url: string | null;
+}
+
 interface School {
   id: string;
   name: string;
@@ -50,7 +60,9 @@ interface Batch {
 interface BatchDetails {
   batch: Batch;
   students: Student[];
+  staff: Staff[];
   studentCount?: number;
+  staffCount?: number;
 }
 
 export default function BatchDetails() {
@@ -59,6 +71,7 @@ export default function BatchDetails() {
   const [batchDetails, setBatchDetails] = useState<BatchDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloadingCSV, setIsDownloadingCSV] = useState(false);
+  const [isDownloadingStaffCSV, setIsDownloadingStaffCSV] = useState(false);
   const [isDownloadingPhotos, setIsDownloadingPhotos] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
@@ -119,6 +132,38 @@ export default function BatchDetails() {
       toast.error(error.message || 'Failed to download CSV');
     } finally {
       setIsDownloadingCSV(false);
+    }
+  };
+
+  const handleDownloadStaffCSV = async () => {
+    setIsDownloadingStaffCSV(true);
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch(`${API_URL}/api/admin/batches/${id}/staff-csv`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download staff CSV');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `batch-${id}-staff.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Staff CSV downloaded successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to download staff CSV');
+    } finally {
+      setIsDownloadingStaffCSV(false);
     }
   };
 
@@ -213,7 +258,8 @@ export default function BatchDetails() {
     );
   }
 
-  const { batch, students = [] } = batchDetails;
+  const { batch, students = [], staff = [] } = batchDetails;
+  const totalMembers = students.length + staff.length;
   
   // Extract school info from batch (API returns it embedded)
   const school = {
@@ -272,7 +318,7 @@ export default function BatchDetails() {
             <div className="flex items-center gap-2 text-sm">
               <Users className="w-4 h-4 text-muted-foreground" />
               <span className="text-muted-foreground">Total ID Cards:</span>
-              <span className="font-medium">{students.length}</span>
+              <span className="font-medium">{totalMembers} ({students.length} students, {staff.length} staff)</span>
             </div>
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm">
               <p className="text-blue-700 dark:text-blue-300">
@@ -415,6 +461,26 @@ export default function BatchDetails() {
             </Button>
 
             <Button
+              onClick={handleDownloadStaffCSV}
+              disabled={isDownloadingStaffCSV || staff.length === 0}
+              className="w-full min-h-[48px] text-base"
+              size="lg"
+              variant="secondary"
+            >
+              {isDownloadingStaffCSV ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  Downloading Staff CSV...
+                </>
+              ) : (
+                <>
+                  <FileText className="w-5 h-5 mr-2" />
+                  Download Staff Data (CSV)
+                </>
+              )}
+            </Button>
+
+            <Button
               onClick={handleDownloadPhotos}
               disabled={isDownloadingPhotos}
               variant="outline"
@@ -437,7 +503,7 @@ export default function BatchDetails() {
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
               <p className="font-medium mb-1">📦 What's included in the ZIP:</p>
               <ul className="list-disc list-inside space-y-1 text-xs">
-                <li>All student photos</li>
+                <li>All student and staff photos</li>
                 <li>School logo</li>
                 <li>Principal signature</li>
               </ul>
@@ -454,39 +520,88 @@ export default function BatchDetails() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {students.map((student, index) => (
-                <div
-                  key={student.id}
-                  className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                >
-                  <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {student.photo_url ? (
-                      <img
-                        src={student.photo_url}
-                        alt={student.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Users className="w-6 h-6 text-gray-400" />
-                    )}
+            {students.length > 0 ? (
+              <div className="space-y-3">
+                {students.map((student, index) => (
+                  <div
+                    key={student.id}
+                    className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                  >
+                    <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {student.photo_url ? (
+                        <img
+                          src={student.photo_url}
+                          alt={student.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Users className="w-6 h-6 text-gray-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{student.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        Class {student.class}
+                        {student.section && ` - ${student.section}`}
+                        {student.roll_number && ` | Roll: ${student.roll_number}`}
+                      </p>
+                    </div>
+                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                      #{index + 1}
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{student.name}</p>
-                    <p className="text-sm text-muted-foreground truncate">
-                      Class {student.class}
-                      {student.section && ` - ${student.section}`}
-                      {student.roll_number && ` | Roll: ${student.roll_number}`}
-                    </p>
-                  </div>
-                  <span className="text-xs text-muted-foreground flex-shrink-0">
-                    #{index + 1}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-4">No students in this batch</p>
+            )}
           </CardContent>
         </Card>
+
+        {/* Staff List */}
+        {staff.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Staff ({staff.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {staff.map((member, index) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg"
+                  >
+                    <div className="w-12 h-12 bg-purple-200 dark:bg-purple-700 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {member.photo_url ? (
+                        <img
+                          src={member.photo_url}
+                          alt={member.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Users className="w-6 h-6 text-purple-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{member.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {member.designation}
+                        {member.department && ` | ${member.department}`}
+                        {member.employee_id && ` | ID: ${member.employee_id}`}
+                      </p>
+                    </div>
+                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                      #{index + 1}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -15,6 +15,8 @@ interface DashboardStats {
   submittedBatches: number;
   processingBatches: number;
   completedBatches: number;
+  totalStudents: number;
+  totalStaff: number;
 }
 
 interface RecentBatch {
@@ -35,6 +37,8 @@ export default function Dashboard() {
     submittedBatches: 0,
     processingBatches: 0,
     completedBatches: 0,
+    totalStudents: 0,
+    totalStaff: 0,
   });
   const [recentBatches, setRecentBatches] = useState<RecentBatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,12 +64,18 @@ export default function Dashboard() {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
+      // Fetch analytics for student and staff counts
+      const analyticsResponse = await fetch(`${API_URL}/api/admin/analytics`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
       if (!schoolsResponse.ok || !batchesResponse.ok) {
         throw new Error('Failed to fetch dashboard data');
       }
 
       const schoolsData = await schoolsResponse.json();
       const batchesData = await batchesResponse.json();
+      const analyticsData = analyticsResponse.ok ? await analyticsResponse.json() : null;
 
       const schools = schoolsData.data || [];
       const batches = batchesData.data || [];
@@ -78,6 +88,8 @@ export default function Dashboard() {
         submittedBatches: batches.filter((b: any) => b.status === 'submitted').length,
         processingBatches: batches.filter((b: any) => b.status === 'processing').length,
         completedBatches: batches.filter((b: any) => b.status === 'completed').length,
+        totalStudents: analyticsData?.data?.totalStudents || 0,
+        totalStaff: analyticsData?.data?.totalStaff || 0,
       });
 
       setRecentBatches(batches.slice(0, 5));
@@ -169,6 +181,54 @@ export default function Dashboard() {
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   With student data
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Members Stats */}
+        <div>
+          <h2 className="text-lg font-semibold mb-3">Members Overview</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Card
+              className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => navigate('/analytics')}
+            >
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Total Students
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <p className="text-3xl font-bold text-blue-600">{stats.totalStudents}</p>
+                  <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Across all schools
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => navigate('/analytics')}
+            >
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Total Staff
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <p className="text-3xl font-bold text-purple-600">{stats.totalStaff}</p>
+                  <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Across all schools
                 </p>
               </CardContent>
             </Card>

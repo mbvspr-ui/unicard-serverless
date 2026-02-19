@@ -96,6 +96,20 @@ export const uploadStudentPhoto = async (
 };
 
 /**
+ * Upload staff photo
+ */
+export const uploadStaffPhoto = async (
+  file: Buffer,
+  schoolId: string,
+  staffId: string,
+  contentType: string
+): Promise<string> => {
+  const filename = `${staffId}.png`; // Always save as PNG
+  const folder = `staff-photos/${schoolId}`;
+  return await uploadFile(file, filename, folder, contentType);
+};
+
+/**
  * Upload school logo
  */
 export const uploadSchoolLogo = async (

@@ -15,6 +15,15 @@ interface Student {
   photo_url: string | null;
 }
 
+interface Staff {
+  id: string;
+  name: string;
+  designation: string;
+  staff_type: string;
+  department: string | null;
+  photo_url: string | null;
+}
+
 interface SubmissionDetail {
   id: string;
   school_id: string;
@@ -23,6 +32,9 @@ interface SubmissionDetail {
   processed_at: string | null;
   admin_notes: string | null;
   students: Student[];
+  staff: Staff[];
+  studentCount: number;
+  staffCount: number;
 }
 
 const STATUS_COLORS = {
@@ -55,11 +67,14 @@ export default function SubmissionDetail() {
       const response = await batchApi.getById(id);
 
       if (response.success && response.data) {
-        // API returns { batch, students, studentCount }
-        const { batch, students } = response.data;
+        // API returns { batch, students, staff, studentCount, staffCount }
+        const { batch, students, staff, studentCount, staffCount } = response.data;
         setSubmission({
           ...batch,
           students: students || [],
+          staff: staff || [],
+          studentCount: studentCount || 0,
+          staffCount: staffCount || 0,
         });
       } else {
         toast.error('Failed to load submission details');
@@ -102,6 +117,7 @@ export default function SubmissionDetail() {
   }
 
   const students = submission.students || [];
+  const staff = submission.staff || [];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
@@ -140,10 +156,14 @@ export default function SubmissionDetail() {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t">
               <div>
                 <p className="text-sm text-gray-500 mb-1">Total Students</p>
-                <p className="text-lg font-semibold">{students.length}</p>
+                <p className="text-lg font-semibold">{submission.studentCount || students.length}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Total Staff</p>
+                <p className="text-lg font-semibold">{submission.staffCount || staff.length}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Submitted At</p>
@@ -169,88 +189,177 @@ export default function SubmissionDetail() {
         </Card>
 
         {/* Students List */}
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Students in this Submission</h2>
-          
-          {/* Mobile View */}
-          <div className="md:hidden space-y-3">
-            {students.map((student) => (
-              <div key={student.id} className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex items-center gap-3">
-                  {student.photo_url ? (
-                    <img
-                      src={student.photo_url}
-                      alt={student.name}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-                      <span className="text-gray-600 text-sm">
-                        {student.name.charAt(0)}
-                      </span>
+        {students.length > 0 && (
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Students in this Submission ({students.length})</h2>
+            
+            {/* Mobile View */}
+            <div className="md:hidden space-y-3">
+              {students.map((student) => (
+                <div key={student.id} className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {student.photo_url ? (
+                      <img
+                        src={student.photo_url}
+                        alt={student.name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
+                        <span className="text-gray-600 text-sm">
+                          {student.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <p className="font-medium">{student.name}</p>
+                      <p className="text-sm text-gray-600">
+                        Class {student.class} {student.section} • Roll {student.roll_number}
+                      </p>
                     </div>
-                  )}
-                  <div className="flex-1">
-                    <p className="font-medium">{student.name}</p>
-                    <p className="text-sm text-gray-600">
-                      Class {student.class} {student.section} • Roll {student.roll_number}
-                    </p>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          {/* Desktop View */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    Photo
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    Name
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    Class
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    Section
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    Roll Number
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {students.map((student) => (
-                  <tr key={student.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      {student.photo_url ? (
-                        <img
-                          src={student.photo_url}
-                          alt={student.name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                          <span className="text-gray-600 text-sm">
-                            {student.name.charAt(0)}
-                          </span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium">{student.name}</td>
-                    <td className="px-4 py-3 text-sm">{student.class}</td>
-                    <td className="px-4 py-3 text-sm">{student.section}</td>
-                    <td className="px-4 py-3 text-sm">{student.roll_number}</td>
+            {/* Desktop View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Photo
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Class
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Section
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Roll Number
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+                </thead>
+                <tbody className="divide-y">
+                  {students.map((student) => (
+                    <tr key={student.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        {student.photo_url ? (
+                          <img
+                            src={student.photo_url}
+                            alt={student.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                            <span className="text-gray-600 text-sm">
+                              {student.name.charAt(0)}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium">{student.name}</td>
+                      <td className="px-4 py-3 text-sm">{student.class}</td>
+                      <td className="px-4 py-3 text-sm">{student.section}</td>
+                      <td className="px-4 py-3 text-sm">{student.roll_number}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+
+        {/* Staff List */}
+        {staff.length > 0 && (
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Staff in this Submission ({staff.length})</h2>
+            
+            {/* Mobile View */}
+            <div className="md:hidden space-y-3">
+              {staff.map((member) => (
+                <div key={member.id} className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {member.photo_url ? (
+                      <img
+                        src={member.photo_url}
+                        alt={member.name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
+                        <span className="text-gray-600 text-sm">
+                          {member.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <p className="font-medium">{member.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {member.designation} • {member.staff_type}
+                        {member.department && ` • ${member.department}`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Photo
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Designation
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Type
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Department
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {staff.map((member) => (
+                    <tr key={member.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        {member.photo_url ? (
+                          <img
+                            src={member.photo_url}
+                            alt={member.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                            <span className="text-gray-600 text-sm">
+                              {member.name.charAt(0)}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium">{member.name}</td>
+                      <td className="px-4 py-3 text-sm">{member.designation}</td>
+                      <td className="px-4 py-3 text-sm">{member.staff_type}</td>
+                      <td className="px-4 py-3 text-sm">{member.department || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );
