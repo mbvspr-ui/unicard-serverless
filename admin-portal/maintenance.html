@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Under Maintenance - Samiul Graphics Admin Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+        }
+
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        p {
+            color: #666;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+
+        .info-box p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .contact {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+
+        .contact h3 {
+            color: #f5576c;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .contact-item {
+            color: #555;
+            font-size: 16px;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .contact-item:hover {
+            color: #f5576c;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .icon {
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            p {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🔧</div>
+        <h1>Admin Portal Under Maintenance</h1>
+        <p>We're currently performing scheduled maintenance to improve your experience. We'll be back online shortly.</p>
+        
+        <div class="info-box">
+            <p><strong>🕐 Expected Duration:</strong> 1-2 hours</p>
+            <p><strong>📅 Status:</strong> Maintenance in Progress</p>
+            <p><strong>✨ What's New:</strong> System improvements and updates</p>
+        </div>
+
+        <p>Thank you for your patience and understanding.</p>
+
+        <div class="contact">
+            <h3>Need Urgent Assistance?</h3>
+            <div class="contact-info">
+                <a href="mailto:support@samiulgraphics.com" class="contact-item">📧 support@samiulgraphics.com</a>
+                <span class="contact-item">📞 Contact system administrator</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
