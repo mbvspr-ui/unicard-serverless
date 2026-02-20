@@ -26,6 +26,8 @@ export const Login = () => {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricRegistered, setBiometricRegistered] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
+  const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
+  const [biometricRegistering, setBiometricRegistering] = useState(false);
   
   // Forgot password state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -92,20 +94,14 @@ export const Login = () => {
       await login(email, password);
       toast.success('Login successful!');
       
-      // Offer to register biometric after successful login
+      // Show biometric registration dialog after successful login
       if (biometricAvailable && !biometricRegistered) {
         setTimeout(() => {
-          toast.info('Enable fingerprint/face login for faster access', {
-            action: {
-              label: 'Enable',
-              onClick: () => handleRegisterBiometric(),
-            },
-            duration: 10000,
-          });
-        }, 1000);
+          setShowBiometricPrompt(true);
+        }, 500);
+      } else {
+        navigate('/dashboard');
       }
-      
-      navigate('/dashboard');
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
     } finally {
@@ -146,6 +142,7 @@ export const Login = () => {
       return;
     }
 
+    setBiometricRegistering(true);
     try {
       const registered = await registerBiometric(email);
       
@@ -155,11 +152,20 @@ export const Login = () => {
         localStorage.setItem('biometric_password', password);
         
         setBiometricRegistered(true);
+        setShowBiometricPrompt(false);
         toast.success('Biometric authentication enabled! You can now use fingerprint/face to login.');
+        navigate('/dashboard');
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to enable biometric authentication');
+    } finally {
+      setBiometricRegistering(false);
     }
+  };
+
+  const handleSkipBiometric = () => {
+    setShowBiometricPrompt(false);
+    navigate('/dashboard');
   };
 
   const handleForgotPassword = async () => {
@@ -318,6 +324,106 @@ export const Login = () => {
           </form>
         </CardContent>
       </Card>
+
+      {/* Biometric Registration Prompt Dialog */}
+      <Dialog open={showBiometricPrompt} onOpenChange={setShowBiometricPrompt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                {/* Animated gradient circle */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-purple-500 via-pink-500 to-blue-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                <div className="relative w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl">
+                  <Fingerprint className="w-10 h-10 text-white" />
+                </div>
+              </div>
+            </div>
+            <DialogTitle className="text-center text-2xl">
+              Enable Quick Login
+            </DialogTitle>
+            <DialogDescription className="text-center text-base pt-2">
+              Use your fingerprint or face to login instantly next time. No need to type your password!
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Benefits List */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Lightning Fast</p>
+                  <p className="text-sm text-gray-600">Login in under 2 seconds</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Super Secure</p>
+                  <p className="text-sm text-gray-600">Your biometric data never leaves your device</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
+                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Easy & Convenient</p>
+                  <p className="text-sm text-gray-600">No more remembering passwords</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Privacy Note */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <p className="text-xs text-gray-600 text-center">
+                <span className="font-semibold">🔒 Privacy Protected:</span> Your fingerprint/face data is stored securely on your device only and is never sent to our servers.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Button
+              onClick={handleRegisterBiometric}
+              disabled={biometricRegistering}
+              className="w-full h-12 text-base font-semibold"
+              size="lg"
+            >
+              {biometricRegistering ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Setting up...
+                </>
+              ) : (
+                <>
+                  <Fingerprint className="mr-2 h-5 w-5" />
+                  Enable Quick Login
+                </>
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={handleSkipBiometric}
+              disabled={biometricRegistering}
+              className="w-full"
+            >
+              Maybe Later
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Forgot Password Modal */}
       <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
