@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
@@ -17,11 +17,13 @@ import { Header } from '../components/Header';
 import { staffApi } from '../lib/api';
 import { Staff } from '../types';
 import { RefreshCw, Edit, Trash2, Briefcase, Eye } from 'lucide-react';
+import { addCacheBuster } from '../utils/photo';
 
 const STAFF_TYPES = ['Teaching', 'Non-Teaching', 'Administrative', 'Support'];
 
 export default function StaffList() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,6 +36,7 @@ export default function StaffList() {
   const [departments, setDepartments] = useState<string[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const limit = 50;
 
@@ -52,7 +55,12 @@ export default function StaffList() {
 
       if (response.success) {
         const staffData = Array.isArray(response.data) ? response.data : [];
-        setStaff(staffData);
+        // Add cache buster to all photo URLs
+        const staffWithFreshPhotos = staffData.map(member => ({
+          ...member,
+          photo_url: member.photo_url ? addCacheBuster(member.photo_url) : null
+        }));
+        setStaff(staffWithFreshPhotos);
         
         // Extract unique departments
         const uniqueDepts = Array.from(new Set(
@@ -86,7 +94,13 @@ export default function StaffList() {
   // Fetch staff on mount and when filters change
   useEffect(() => {
     fetchStaff();
-  }, [currentPage, searchQuery, staffTypeFilter, departmentFilter]);
+  }, [currentPage, searchQuery, staffTypeFilter, departmentFilter, refreshKey]);
+
+  // Refresh data when navigating back to this page
+  useEffect(() => {
+    // Force refresh when coming back from edit page
+    setRefreshKey(prev => prev + 1);
+  }, [location.key]);
 
   // Handle search with debounce
   const handleSearch = (value: string) => {

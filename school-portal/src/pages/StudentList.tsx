@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
@@ -32,6 +32,7 @@ const SECTIONS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 export default function StudentList() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
@@ -45,6 +46,7 @@ export default function StudentList() {
   const [showBatchDialog, setShowBatchDialog] = useState(false);
   const [showDetailsDrawer, setShowDetailsDrawer] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const limit = 50;
 
@@ -64,7 +66,12 @@ export default function StudentList() {
       if (response.success) {
         // API response structure: { success, data: Student[], pagination: {...} }
         const studentsData = Array.isArray(response.data) ? response.data : [];
-        setStudents(studentsData);
+        // Add cache buster to all photo URLs
+        const studentsWithFreshPhotos = studentsData.map(student => ({
+          ...student,
+          photo_url: student.photo_url ? addCacheBuster(student.photo_url) : null
+        }));
+        setStudents(studentsWithFreshPhotos);
         
         // Pagination is at root level of response
         const paginationData = (response as any).pagination;
@@ -91,7 +98,13 @@ export default function StudentList() {
   // Fetch students on mount and when filters change
   useEffect(() => {
     fetchStudents();
-  }, [currentPage, searchQuery, classFilter, sectionFilter]);
+  }, [currentPage, searchQuery, classFilter, sectionFilter, refreshKey]);
+
+  // Refresh data when navigating back to this page
+  useEffect(() => {
+    // Force refresh when coming back from edit page
+    setRefreshKey(prev => prev + 1);
+  }, [location.key]);
 
   // Handle search with debounce
   const handleSearch = (value: string) => {
