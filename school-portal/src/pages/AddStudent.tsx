@@ -192,11 +192,8 @@ export default function AddStudent() {
       }
     }
 
-    // Photo is mandatory
-    if (!photoBlob) {
-      newErrors.photo = 'Student photo is required';
-    }
-
+    // Photo is optional - can be added later via edit
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

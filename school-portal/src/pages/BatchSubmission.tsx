@@ -125,8 +125,8 @@ export default function BatchSubmission() {
         {/* Info Card */}
         <Card className="p-4 mb-4 bg-blue-50 border-blue-200">
           <p className="text-sm text-blue-900">
-            Select students and staff members with photos to submit for ID card printing.
-            Only members with uploaded photos can be selected.
+            <strong>Photo Requirement:</strong> Only students and staff with uploaded photos can be submitted for ID card printing.
+            Members without photos will not appear in this list. You can add photos later by editing their profiles.
           </p>
         </Card>
 
@@ -194,9 +194,14 @@ export default function BatchSubmission() {
             </div>
 
             {students.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">
-                No students with photos found. Please add photos to students first.
-              </p>
+              <div className="text-center py-8">
+                <p className="text-gray-500 mb-2">
+                  No students with photos found.
+                </p>
+                <p className="text-sm text-gray-400">
+                  Add photos to students via the Edit Student page, then they will appear here for printing.
+                </p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {students.map((student) => (
@@ -248,9 +253,14 @@ export default function BatchSubmission() {
             </div>
 
             {staff.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">
-                No staff with photos found. Please add photos to staff first.
-              </p>
+              <div className="text-center py-8">
+                <p className="text-gray-500 mb-2">
+                  No staff with photos found.
+                </p>
+                <p className="text-sm text-gray-400">
+                  Add photos to staff via the Edit Staff page, then they will appear here for printing.
+                </p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {staff.map((member) => (

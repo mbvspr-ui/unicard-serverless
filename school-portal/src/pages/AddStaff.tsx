@@ -148,10 +148,7 @@ export default function AddStaff() {
       }
     }
 
-    if (!photoBlob) {
-      newErrors.photo = 'Photo is required';
-      toast.error('Please add a photo');
-    }
+    // Photo is optional - can be added later via edit
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
