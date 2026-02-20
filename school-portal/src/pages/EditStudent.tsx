@@ -20,6 +20,7 @@ import { PhotoEditor } from '../components/PhotoEditor';
 import { studentApi, locationApi } from '../lib/api';
 import { StudentInput } from '../types';
 import { PlusCircle, Edit2, Trash2 } from 'lucide-react';
+import { addCacheBuster } from '../utils/photo';
 
 const CLASSES = [
   'Nursery', 'LKG', 'UKG',
@@ -121,9 +122,9 @@ export default function EditStudent() {
           setFormData(studentData);
           setOriginalData(studentData); // Save original for comparison
           
-          // Load current photo
+          // Load current photo with cache-busting
           if (student.photo_url) {
-            setCurrentPhotoUrl(student.photo_url);
+            setCurrentPhotoUrl(addCacheBuster(student.photo_url));
           }
         } else {
           toast.error('Failed to load student data');

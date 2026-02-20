@@ -12,6 +12,7 @@ import { staffApi, locationApi } from '../lib/api';
 import { StaffInput } from '../types';
 import { Briefcase, Edit2, Trash2 } from 'lucide-react';
 import { Header } from '../components/Header';
+import { addCacheBuster } from '../utils/photo';
 
 const STAFF_TYPES = ['Teaching', 'Non-Teaching', 'Administrative', 'Support'];
 const GENDERS = ['Male', 'Female', 'Other'];
@@ -108,7 +109,7 @@ export default function EditStaff() {
           });
           
           if (staff.photo_url) {
-            setCurrentPhotoUrl(staff.photo_url);
+            setCurrentPhotoUrl(addCacheBuster(staff.photo_url));
           }
         } else {
           toast.error('Failed to load staff data');
