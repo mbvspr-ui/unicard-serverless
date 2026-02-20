@@ -85,6 +85,21 @@ export default function EditStudent() {
         const response = await studentApi.getById(studentId);
         if (response.success && response.data) {
           const student = response.data;
+          
+          // Helper function to convert ISO date to yyyy-MM-dd format
+          const formatDateForInput = (isoDate: string | null | undefined): string => {
+            if (!isoDate) return '';
+            try {
+              const date = new Date(isoDate);
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            } catch {
+              return '';
+            }
+          };
+          
           const studentData = {
             name: student.name,
             father_name: student.father_name || '',
@@ -93,7 +108,7 @@ export default function EditStudent() {
             section: student.section || '',
             roll_number: student.roll_number || '',
             student_id: student.student_id || '',
-            date_of_birth: student.date_of_birth || '',
+            date_of_birth: formatDateForInput(student.date_of_birth),
             gender: student.gender || '',
             phone_number: student.phone_number || '+91',
             blood_group: student.blood_group || '',

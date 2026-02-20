@@ -69,10 +69,25 @@ export default function EditStaff() {
         const response = await staffApi.getById(staffId);
         if (response.success && response.data) {
           const staff = response.data;
+          
+          // Helper function to convert ISO date to yyyy-MM-dd format
+          const formatDateForInput = (isoDate: string | null | undefined): string => {
+            if (!isoDate) return '';
+            try {
+              const date = new Date(isoDate);
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            } catch {
+              return '';
+            }
+          };
+          
           setFormData({
             name: staff.name,
             father_spouse_name: staff.father_spouse_name || '',
-            date_of_birth: staff.date_of_birth || '',
+            date_of_birth: formatDateForInput(staff.date_of_birth),
             gender: staff.gender,
             phone_number: staff.phone_number || '+91',
             blood_group: staff.blood_group || '',
@@ -80,7 +95,7 @@ export default function EditStaff() {
             staff_type: staff.staff_type,
             designation: staff.designation,
             department: staff.department || '',
-            date_of_joining: staff.date_of_joining || '',
+            date_of_joining: formatDateForInput(staff.date_of_joining),
             qualification: staff.qualification || '',
             address: staff.address || '',
             state: staff.state,
