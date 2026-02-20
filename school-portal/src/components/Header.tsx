@@ -23,9 +23,9 @@ export const Header = ({ title, showBack = false, showHome = false }: HeaderProp
   };
 
   return (
-    <div className="bg-white border-b sticky top-0 z-10 shadow-sm">
+    <div className="bg-white/95 backdrop-blur-md border-b sticky top-0 z-50 shadow-lg transition-all duration-300">
       {/* Main Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 text-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             {/* Left Section - Samiul Graphics Branding */}
