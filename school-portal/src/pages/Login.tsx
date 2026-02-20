@@ -7,7 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { schoolApi } from '../lib/api';
 import { toast } from 'sonner';
-import { Loader2, Download } from 'lucide-react';
+import { Loader2, Download, Fingerprint } from 'lucide-react';
+import { 
+  isBiometricAvailable, 
+  isBiometricRegistered, 
+  authenticateWithBiometric,
+  registerBiometric 
+} from '../utils/biometric';
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -15,6 +21,11 @@ export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Biometric state
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricRegistered, setBiometricRegistered] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
   
   // Forgot password state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -26,6 +37,20 @@ export const Login = () => {
   const [showInstallButton, setShowInstallButton] = useState(false);
 
   useEffect(() => {
+    // Check biometric availability
+    const checkBiometric = async () => {
+      const available = await isBiometricAvailable();
+      setBiometricAvailable(available);
+      
+      if (available) {
+        const registered = isBiometricRegistered();
+        setBiometricRegistered(registered);
+      }
+    };
+    
+    checkBiometric();
+
+    // PWA install handler
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -66,11 +91,74 @@ export const Login = () => {
     try {
       await login(email, password);
       toast.success('Login successful!');
+      
+      // Offer to register biometric after successful login
+      if (biometricAvailable && !biometricRegistered) {
+        setTimeout(() => {
+          toast.info('Enable fingerprint/face login for faster access', {
+            action: {
+              label: 'Enable',
+              onClick: () => handleRegisterBiometric(),
+            },
+            duration: 10000,
+          });
+        }, 1000);
+      }
+      
       navigate('/dashboard');
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    setBiometricLoading(true);
+    
+    try {
+      // Authenticate with biometric
+      const authenticated = await authenticateWithBiometric();
+      
+      if (authenticated) {
+        // Get stored credentials
+        const storedEmail = localStorage.getItem('biometric_email');
+        const storedPassword = localStorage.getItem('biometric_password');
+        
+        if (storedEmail && storedPassword) {
+          await login(storedEmail, storedPassword);
+          toast.success('Login successful!');
+          navigate('/dashboard');
+        } else {
+          toast.error('Stored credentials not found. Please login with email and password.');
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Biometric authentication failed');
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
+
+  const handleRegisterBiometric = async () => {
+    if (!email || !password) {
+      toast.error('Please login first to enable biometric authentication');
+      return;
+    }
+
+    try {
+      const registered = await registerBiometric(email);
+      
+      if (registered) {
+        // Store credentials securely (in production, use more secure storage)
+        localStorage.setItem('biometric_email', email);
+        localStorage.setItem('biometric_password', password);
+        
+        setBiometricRegistered(true);
+        toast.success('Biometric authentication enabled! You can now use fingerprint/face to login.');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to enable biometric authentication');
     }
   };
 
@@ -163,6 +251,30 @@ export const Login = () => {
                 'Login'
               )}
             </Button>
+
+            {/* Biometric Login Button */}
+            {biometricAvailable && biometricRegistered && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                size="lg"
+                onClick={handleBiometricLogin}
+                disabled={biometricLoading}
+              >
+                {biometricLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Authenticating...
+                  </>
+                ) : (
+                  <>
+                    <Fingerprint className="mr-2 h-5 w-5" />
+                    Login with Fingerprint/Face
+                  </>
+                )}
+              </Button>
+            )}
 
             {/* Forgot Password Link */}
             <div className="text-center">

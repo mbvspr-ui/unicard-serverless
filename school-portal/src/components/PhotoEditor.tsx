@@ -180,10 +180,24 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
       
       const img = await loadImageFromFile(file);
       
+      // Force image to load completely before setting state
+      await new Promise((resolve) => {
+        if (img.complete) {
+          resolve(true);
+        } else {
+          img.onload = () => resolve(true);
+        }
+      });
+      
       setImage(img);
       setOriginalImage(img);
       setHasTransparentBg(false);
       resetFilters(false); // Don't show toast when loading new image
+      
+      // Clear the file input to allow selecting the same file again
+      if (e.target) {
+        e.target.value = '';
+      }
     } catch (error) {
       console.error('File load error:', error);
       toast.error('Failed to load image');
@@ -205,18 +219,26 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
       setIsCameraActive(true);
       setIsCameraReady(false);
       
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: facingMode, 
-          width: { ideal: 1280 }, 
-          height: { ideal: 720 } 
-        }
-      });
+      // Request camera with mobile-optimized settings
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
+        },
+        audio: false,
+      };
+      
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       
       setStream(mediaStream);
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        
+        // Mobile-specific: Set attributes for better compatibility
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('webkit-playsinline', 'true');
         
         // Wait for video to be ready
         videoRef.current.onloadedmetadata = () => {
@@ -260,10 +282,15 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
         try {
           setIsCameraActive(true);
           setIsCameraReady(false);
-          const simpleStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const simpleStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: facingMode },
+            audio: false 
+          });
           setStream(simpleStream);
           if (videoRef.current) {
             videoRef.current.srcObject = simpleStream;
+            videoRef.current.setAttribute('playsinline', 'true');
+            videoRef.current.setAttribute('webkit-playsinline', 'true');
             await videoRef.current.play();
             setIsCameraReady(true);
           }
