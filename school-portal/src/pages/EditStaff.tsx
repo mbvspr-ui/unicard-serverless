@@ -244,7 +244,13 @@ export default function EditStaff() {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      // Show the first specific error message
+      const firstError = Object.values(errors)[0];
+      if (firstError) {
+        toast.error(firstError);
+      } else {
+        toast.error('Please fill in all required fields');
+      }
       return;
     }
 
@@ -290,7 +296,9 @@ export default function EditStaff() {
             }
           });
           setErrors(apiErrors);
-          toast.error('Please fix the errors in the form');
+          // Show the first specific error
+          const firstError = Object.values(apiErrors)[0];
+          toast.error(firstError || 'Please fix the errors in the form');
         } else {
           toast.error(response.error?.message || 'Failed to update staff member');
         }

@@ -256,18 +256,49 @@ export default function EditStudent() {
       return;
     }
     
-    // Validate only selected fields
+    // Validate only selected fields with specific error messages
     const newErrors: Record<string, string> = {};
+    const fieldLabels: Record<string, string> = {
+      name: 'Student Name',
+      father_name: 'Father Name',
+      mother_name: 'Mother Name',
+      class: 'Class',
+      section: 'Section',
+      roll_number: 'Roll Number',
+      student_id: 'Student ID',
+      date_of_birth: 'Date of Birth',
+      gender: 'Gender',
+      phone_number: 'Phone Number',
+      blood_group: 'Blood Group',
+      address: 'Address',
+      state: 'State',
+      district: 'District',
+      city: 'City',
+      pincode: 'Pincode',
+    };
+    
     selectedFields.forEach(field => {
       const value = formData[field as keyof StudentInput];
+      const label = fieldLabels[field] || field;
+      
       if (!value || (typeof value === 'string' && value.trim() === '')) {
-        newErrors[field] = `${field} is required`;
+        newErrors[field] = `${label} is required`;
+      } else if (field === 'phone_number' && typeof value === 'string') {
+        if (value.length < 10) {
+          newErrors[field] = 'Phone number must be at least 10 digits';
+        }
+      } else if (field === 'pincode' && typeof value === 'string') {
+        if (value.length !== 6) {
+          newErrors[field] = 'Pincode must be exactly 6 digits';
+        }
       }
     });
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error('Please fix the errors in selected fields');
+      // Show the first error message
+      const firstError = Object.values(newErrors)[0];
+      toast.error(firstError);
       return;
     }
     

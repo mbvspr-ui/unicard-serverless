@@ -161,7 +161,13 @@ export default function AddStaff() {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      // Show the first specific error message
+      const firstError = Object.values(errors)[0];
+      if (firstError) {
+        toast.error(firstError);
+      } else {
+        toast.error('Please fill in all required fields');
+      }
       return;
     }
 

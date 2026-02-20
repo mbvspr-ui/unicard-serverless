@@ -203,7 +203,13 @@ export default function AddStudent() {
 
   const handleShowPreview = () => {
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      // Show the first specific error message
+      const firstError = Object.values(errors)[0];
+      if (firstError) {
+        toast.error(firstError);
+      } else {
+        toast.error('Please fill in all required fields');
+      }
       return;
     }
     setShowPreview(true);
@@ -254,7 +260,9 @@ export default function AddStudent() {
           });
           setErrors(apiErrors);
           setShowPreview(false);
-          toast.error('Please fix the errors in the form');
+          // Show the first specific error
+          const firstError = Object.values(apiErrors)[0];
+          toast.error(firstError || 'Please fix the errors in the form');
         } else {
           toast.error(response.error?.message || 'Failed to add student');
         }
