@@ -1,13 +1,21 @@
-# Deployment Guide - Automatic Cache Busting
+# Deployment Guide - Automatic Cache Busting & Update Detection
 
 ## Overview
-The system now includes automatic cache busting and update notifications. When you deploy a new version, users will automatically be prompted to update their app.
+The system now includes automatic cache busting and real-time update detection. When you deploy a new version, users will be automatically notified within 30 seconds without needing to refresh.
 
 ## How It Works
 
-1. **Version Check**: On app load, the system checks if the stored version matches the current version
-2. **Update Prompt**: If versions don't match, users see a full-screen update notification
-3. **Cache Clearing**: When users click "Update Now", the system:
+1. **Version Check**: The app checks for updates:
+   - On initial load
+   - Every 30 seconds while the app is open
+   - When user switches back to the tab
+   - When the browser window regains focus
+
+2. **Remote Version Check**: The app fetches `version.json` from the server to detect new deployments
+
+3. **Update Prompt**: If versions don't match, users see a full-screen update notification
+
+4. **Cache Clearing**: When users click "Update Now", the system:
    - Clears all browser caches
    - Clears localStorage (except auth tokens)
    - Unregisters service workers
@@ -22,25 +30,54 @@ The system now includes automatic cache busting and update notifications. When y
    **School Portal:**
    ```typescript
    // File: school-portal/src/utils/version.ts
-   export const APP_VERSION = '1.0.6'; // Increment this
+   export const APP_VERSION = '1.1.6'; // Increment this
+   ```
+   
+   ```json
+   // File: school-portal/public/version.json
+   {
+     "version": "1.1.6",
+     "timestamp": "2026-02-20T00:00:00.000Z"
+   }
    ```
    
    **Admin Portal:**
    ```typescript
    // File: admin-portal/src/utils/version.ts
-   export const APP_VERSION = '1.0.6'; // Increment this
+   export const APP_VERSION = '1.1.6'; // Increment this
+   ```
+   
+   ```json
+   // File: admin-portal/public/version.json
+   {
+     "version": "1.1.6",
+     "timestamp": "2026-02-20T00:00:00.000Z"
+   }
    ```
 
-2. **Commit and Push:**
+2. **Build Both Portals:**
+   ```bash
+   cd school-portal && npm run build
+   cd ../admin-portal && npm run build
+   ```
+
+3. **Commit and Push:**
    ```bash
    git add -A
-   git commit -m "Bump version to 1.0.6 - [describe changes]"
+   git commit -m "v1.1.6: [describe changes]"
    git push origin main
    ```
 
-3. **Vercel Auto-Deploy:**
+4. **Vercel Auto-Deploy:**
    - Vercel will automatically deploy both portals
-   - Users will see the update notification on their next visit
+   - Users will see the update notification within 30 seconds
+
+## Update Detection Timeline
+
+- **Immediate**: Users who load the app after deployment
+- **Within 30 seconds**: Users who already have the app open
+- **On tab switch**: Users who switch back to the app tab
+- **On window focus**: Users who return to the browser window
 
 ## Version Numbering Convention
 
