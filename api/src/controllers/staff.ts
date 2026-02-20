@@ -131,9 +131,12 @@ export const getStaffList = async (req: AuthRequest, res: Response): Promise<voi
     res.json({
       success: true,
       data: result.rows,
-      total,
-      page,
-      pages: Math.ceil(total / limit),
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     console.error('Get staff list error:', error);
