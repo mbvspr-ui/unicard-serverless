@@ -256,7 +256,7 @@ export default function EditStudent() {
       return;
     }
     
-    // Validate only selected fields with specific error messages
+    // Validate only selected fields with specific error messages (excluding photo)
     const newErrors: Record<string, string> = {};
     const fieldLabels: Record<string, string> = {
       name: 'Student Name',
@@ -278,6 +278,9 @@ export default function EditStudent() {
     };
     
     selectedFields.forEach(field => {
+      // Skip photo field validation
+      if (field === 'photo') return;
+      
       const value = formData[field as keyof StudentInput];
       const label = fieldLabels[field] || field;
       
@@ -314,10 +317,12 @@ export default function EditStudent() {
 
     setSaving(true);
     try {
-      // Build update object with only selected fields
+      // Build update object with only selected fields (excluding photo)
       const updates: any = {};
       selectedFields.forEach(field => {
-        updates[field] = formData[field as keyof StudentInput];
+        if (field !== 'photo') {
+          updates[field] = formData[field as keyof StudentInput];
+        }
       });
       
       // Clean up phone number
@@ -325,49 +330,54 @@ export default function EditStudent() {
         updates.phone_number = undefined;
       }
 
-      const response = await studentApi.update(studentId, updates);
+      // Only call update API if there are fields to update
+      if (Object.keys(updates).length > 0) {
+        const response = await studentApi.update(studentId, updates);
 
-      if (response.success) {
-        // Upload new photo if changed
-        if (photoBlob) {
-          try {
-            const photoFile = new File([photoBlob], 'student-photo.jpg', { type: 'image/jpeg' });
-            const photoResponse = await studentApi.uploadPhoto(studentId, photoFile);
-            if (!photoResponse.success) {
-              toast.warning('Student updated but photo upload failed. You can update it later.');
-            }
-          } catch (photoError) {
-            console.error('Photo upload error:', photoError);
-            toast.warning('Student updated but photo upload failed. You can update it later.');
+        if (!response.success) {
+          if (response.error?.details) {
+            const apiErrors: Record<string, string> = {};
+            response.error.details.forEach((err: any) => {
+              if (err.path && err.path.length > 0) {
+                apiErrors[err.path[0]] = err.message;
+              }
+            });
+            setErrors(apiErrors);
+            setShowPreview(false);
+            toast.error(response.error?.message || 'Failed to update student');
+            setSaving(false);
+            return;
+          } else {
+            toast.error(response.error?.message || 'Failed to update student');
+            setSaving(false);
+            return;
           }
         }
+      }
 
-        toast.success('Student updated successfully!');
-        navigate('/students');
-      } else {
-        if (response.error?.details) {
-          const apiErrors: Record<string, string> = {};
-          response.error.details.forEach((err: any) => {
-            if (err.path && err.path.length > 0) {
-              apiErrors[err.path[0]] = err.message;
-            }
-          });
-          setErrors(apiErrors);
-          setShowPreview(false);
-          toast.error('Please fix the errors in the form');
-        } else {
-          toast.error(response.error?.message || 'Failed to update student');
+      // Upload new photo if changed
+      if (photoBlob) {
+        try {
+          const photoFile = new File([photoBlob], 'student-photo.jpg', { type: 'image/jpeg' });
+          const photoResponse = await studentApi.uploadPhoto(studentId, photoFile);
+          if (!photoResponse.success) {
+            toast.warning('Student updated but photo upload failed. You can update it later.');
+          }
+        } catch (photoError) {
+          console.error('Photo upload error:', photoError);
+          toast.warning('Student updated but photo upload failed. You can update it later.');
         }
       }
+
+      toast.success('Student updated successfully!');
+      navigate('/students');
     } catch (error) {
       console.error('Update error:', error);
-      toast.error('An error occurred while updating student');
+      toast.error('An error occurred while updating the student');
     } finally {
       setSaving(false);
     }
   };
-
-
 
   if (loading) {
     return (
@@ -584,28 +594,10 @@ export default function EditStudent() {
                 </div>
 
                 {/* Photo Upload */}
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="edit-photo"
-                    checked={selectedFields.has('photo') || !!photoBlob}
-                    onCheckedChange={(checked) => {
-                      toggleField('photo', checked as boolean);
-                      if (!checked) {
-                        // Clear photo if unchecked
-                        if (photoPreview) {
-                          URL.revokeObjectURL(photoPreview);
-                        }
-                        setPhotoBlob(null);
-                        setPhotoPreview(null);
-                      }
-                    }}
-                    className="mt-8"
-                    title="Check to update photo"
-                  />
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium mb-2">
-                      Student Photo
-                    </label>
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium mb-2">
+                    Student Photo {photoBlob && <span className="text-green-600">(New photo selected)</span>}
+                  </label>
                   {photoPreview || currentPhotoUrl ? (
                     <div className="space-y-3">
                       <div className="relative inline-block">
@@ -614,6 +606,11 @@ export default function EditStudent() {
                           alt="Student preview"
                           className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
                         />
+                        {photoBlob && (
+                          <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                            New
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -624,18 +621,26 @@ export default function EditStudent() {
                           className="min-h-[44px]"
                         >
                           <Edit2 className="w-4 h-4 mr-2" />
-                          Edit Photo
+                          Change Photo
                         </Button>
-                        <Button
-                          type="button"
-                          onClick={handleRemovePhoto}
-                          variant="outline"
-                          size="sm"
-                          className="min-h-[44px] text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Remove Photo
-                        </Button>
+                        {photoBlob && (
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              if (photoPreview) {
+                                URL.revokeObjectURL(photoPreview);
+                              }
+                              setPhotoBlob(null);
+                              setPhotoPreview(null);
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="min-h-[44px] text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Cancel New Photo
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -654,7 +659,6 @@ export default function EditStudent() {
                       </p>
                     </div>
                   )}
-                  </div>
                 </div>
               </div>
             </div>
