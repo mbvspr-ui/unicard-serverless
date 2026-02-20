@@ -18,6 +18,7 @@ import { BatchSubmissionDialog } from '../components/BatchSubmissionDialog';
 import { Header } from '../components/Header';
 import { studentApi } from '../lib/api';
 import { Student } from '../types';
+import { addCacheBuster } from '../utils/photo';
 import { Eye, RefreshCw } from 'lucide-react';
 
 const CLASSES = [
@@ -328,7 +329,7 @@ export default function StudentList() {
                     >
                       {student.photo_url ? (
                         <img
-                          src={student.photo_url}
+                          src={addCacheBuster(student.photo_url)}
                           alt={student.name}
                           className="w-12 h-12 md:w-16 md:h-16 rounded-lg object-cover border-2 border-gray-200 hover:border-blue-400 transition-colors"
                           loading="lazy"
@@ -452,7 +453,7 @@ export default function StudentList() {
                             >
                               {student.photo_url ? (
                                 <img
-                                  src={student.photo_url}
+                                  src={addCacheBuster(student.photo_url)}
                                   alt={student.name}
                                   className="w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover border-2 border-gray-200 hover:border-blue-400 transition-colors"
                                   loading="lazy"
@@ -576,7 +577,7 @@ export default function StudentList() {
               {selectedStudent.photo_url && (
                 <div className="flex justify-center">
                   <img
-                    src={selectedStudent.photo_url}
+                    src={addCacheBuster(selectedStudent.photo_url)}
                     alt={selectedStudent.name}
                     className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
                   />
