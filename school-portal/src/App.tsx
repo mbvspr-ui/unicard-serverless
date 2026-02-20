@@ -10,6 +10,8 @@ import { SessionExpiryWarning } from './components/SessionExpiryWarning'
 import InstallPrompt from './components/InstallPrompt'
 import OfflineIndicator from './components/OfflineIndicator'
 import UpdateNotification from './components/UpdateNotification'
+import HelpButton from './components/HelpButton'
+import WelcomeGuide from './components/WelcomeGuide'
 
 // Maintenance mode - uncomment below to enable
 // import Maintenance from './pages/Maintenance'
@@ -49,6 +51,8 @@ function AppContent() {
     <>
       <UpdateNotification />
       {isProtectedRoute && <SessionExpiryWarning />}
+      {isProtectedRoute && <HelpButton />}
+      {isProtectedRoute && <WelcomeGuide />}
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/login" element={<Login />} />
