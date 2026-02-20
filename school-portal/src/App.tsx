@@ -9,6 +9,7 @@ import { LoadingSpinner } from './components/ui/loading-spinner'
 import { SessionExpiryWarning } from './components/SessionExpiryWarning'
 import InstallPrompt from './components/InstallPrompt'
 import OfflineIndicator from './components/OfflineIndicator'
+import UpdateNotification from './components/UpdateNotification'
 
 // Maintenance mode - uncomment below to enable
 // import Maintenance from './pages/Maintenance'
@@ -46,6 +47,7 @@ function AppContent() {
 
   return (
     <>
+      <UpdateNotification />
       {isProtectedRoute && <SessionExpiryWarning />}
       <Suspense fallback={<PageLoader />}>
         <Routes>

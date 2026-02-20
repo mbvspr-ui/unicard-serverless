@@ -10,6 +10,7 @@ import MobileHeader from './components/MobileHeader'
 import SessionExpiryWarning from './components/SessionExpiryWarning'
 import InstallPrompt from './components/InstallPrompt'
 import OfflineIndicator from './components/OfflineIndicator'
+import UpdateNotification from './components/UpdateNotification'
 
 // Maintenance mode - uncomment below to enable
 // import Maintenance from './pages/Maintenance'
@@ -39,6 +40,7 @@ function AppContent() {
 
   return (
     <>
+      <UpdateNotification />
       <div className="min-h-screen bg-background">
         {showNav && (
           <>

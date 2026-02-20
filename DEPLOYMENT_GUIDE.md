@@ -1,377 +1,135 @@
-# Unicard Serverless Deployment Guide
+# Deployment Guide - Automatic Cache Busting
 
-This guide covers deploying the complete Unicard serverless system to production.
+## Overview
+The system now includes automatic cache busting and update notifications. When you deploy a new version, users will automatically be prompted to update their app.
 
-## Architecture Overview
+## How It Works
 
-- **Background Removal Service**: Railway (Python Flask)
-- **School Portal**: Vercel (React + Vite)
-- **Admin Portal**: Vercel (React + Vite)
-- **API**: Vercel Serverless Functions (Node.js)
-- **Database**: Aiven PostgreSQL
-- **Storage**: Cloudflare R2
-- **Email**: Brevo SMTP
+1. **Version Check**: On app load, the system checks if the stored version matches the current version
+2. **Update Prompt**: If versions don't match, users see a full-screen update notification
+3. **Cache Clearing**: When users click "Update Now", the system:
+   - Clears all browser caches
+   - Clears localStorage (except auth tokens)
+   - Unregisters service workers
+   - Forces a hard refresh
 
----
+## Deployment Steps
 
-## Prerequisites
+### Every Time You Deploy Changes:
 
-1. GitHub account with repositories:
-   - `background_remover` - For background removal service
-   - `unicard-serverless` - For portals and API
+1. **Update Version Number** in both portals:
+   
+   **School Portal:**
+   ```typescript
+   // File: school-portal/src/utils/version.ts
+   export const APP_VERSION = '1.0.6'; // Increment this
+   ```
+   
+   **Admin Portal:**
+   ```typescript
+   // File: admin-portal/src/utils/version.ts
+   export const APP_VERSION = '1.0.6'; // Increment this
+   ```
 
-2. Accounts:
-   - Railway account (for background removal)
-   - Vercel account (for portals)
-   - Aiven PostgreSQL database (already set up)
-   - Cloudflare R2 storage (already set up)
-   - Brevo SMTP (already set up)
+2. **Commit and Push:**
+   ```bash
+   git add -A
+   git commit -m "Bump version to 1.0.6 - [describe changes]"
+   git push origin main
+   ```
 
-3. Environment variables ready (see below)
+3. **Vercel Auto-Deploy:**
+   - Vercel will automatically deploy both portals
+   - Users will see the update notification on their next visit
 
----
+## Version Numbering Convention
 
-## Part 1: Deploy Background Removal Service to Railway
+Use semantic versioning: `MAJOR.MINOR.PATCH`
 
-### Step 1: Push to GitHub
+- **MAJOR** (1.x.x): Breaking changes, major redesigns
+- **MINOR** (x.1.x): New features, significant improvements
+- **PATCH** (x.x.1): Bug fixes, minor improvements
 
-```bash
-# Navigate to background removal service
-cd unicard-serverless/background-removal-service
+Examples:
+- `1.0.5` → `1.0.6`: Bug fix or minor improvement
+- `1.0.6` → `1.1.0`: New feature added
+- `1.1.0` → `2.0.0`: Major redesign or breaking changes
 
-# Initialize git (if not already)
-git init
-git add .
-git commit -m "Initial commit: Background removal service"
+## What Gets Cleared
 
-# Add remote and push
-git remote add origin https://github.com/mbvspr-ui/background_remover.git
-git branch -M main
-git push -u origin main
+When users update:
+- ✅ Browser cache
+- ✅ Service worker cache
+- ✅ localStorage (except auth tokens)
+- ✅ Session storage
+- ❌ Auth tokens (preserved)
+- ❌ Login sessions (preserved)
+
+## User Experience
+
+### Update Notification:
+```
+┌─────────────────────────────────────┐
+│  🔄  Update Available               │
+│                                     │
+│  A new version of the app is        │
+│  available. Please update to get    │
+│  the latest features.               │
+│                                     │
+│  Version: 1.0.6                     │
+│                                     │
+│  [Update Now]  [X]                  │
+└─────────────────────────────────────┘
 ```
 
-### Step 2: Deploy on Railway
-
-1. Go to [Railway.app](https://railway.app)
-2. Click "New Project"
-3. Select "Deploy from GitHub repo"
-4. Choose `background_remover` repository
-5. Railway will auto-detect the Dockerfile
-
-### Step 3: Configure Environment Variables
-
-In Railway dashboard, add these environment variables:
-
-```
-PORT=8080
-FLASK_ENV=production
-CORS_ORIGINS=https://your-school-portal.vercel.app,https://your-admin-portal.vercel.app
-```
-
-### Step 4: Get Railway URL
-
-After deployment, Railway will provide a URL like:
-`https://background-remover-production.up.railway.app`
-
-Save this URL - you'll need it for the portals.
-
----
-
-## Part 2: Deploy School Portal to Vercel
-
-### Step 1: Push to GitHub
-
-```bash
-# From project root
-cd unicard-serverless
-
-# Initialize git (if not already)
-git init
-git add school-portal/ api/ .gitignore
-git commit -m "Initial commit: School portal and API"
-
-# Add remote and push
-git remote add origin https://github.com/mbvspr-ui/unicard-serverless.git
-git branch -M main
-git push -u origin main
-```
-
-### Step 2: Deploy on Vercel
-
-1. Go to [Vercel](https://vercel.com)
-2. Click "Add New Project"
-3. Import `unicard-serverless` repository
-4. Configure project:
-   - **Framework Preset**: Vite
-   - **Root Directory**: `school-portal`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-
-### Step 3: Configure Environment Variables
-
-In Vercel project settings, add:
-
-```
-VITE_API_URL=https://your-vercel-api.vercel.app/api
-VITE_BG_REMOVAL_URL=https://your-railway-app.up.railway.app
-```
-
-### Step 4: Deploy
-
-Click "Deploy" - Vercel will build and deploy automatically.
-
----
-
-## Part 3: Deploy Admin Portal to Vercel
-
-### Step 1: Create New Vercel Project
-
-1. In Vercel, click "Add New Project"
-2. Import the same `unicard-serverless` repository
-3. Configure project:
-   - **Framework Preset**: Vite
-   - **Root Directory**: `admin-portal`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-
-### Step 2: Configure Environment Variables
-
-```
-VITE_API_URL=https://your-vercel-api.vercel.app/api
-```
-
-### Step 3: Deploy
-
-Click "Deploy".
-
----
-
-## Part 4: Deploy API to Vercel
-
-### Step 1: Create New Vercel Project
-
-1. In Vercel, click "Add New Project"
-2. Import the same `unicard-serverless` repository
-3. Configure project:
-   - **Framework Preset**: Other
-   - **Root Directory**: `api`
-   - **Build Command**: Leave empty
-   - **Output Directory**: Leave empty
-
-### Step 2: Configure Environment Variables
-
-```
-DATABASE_URL=your_aiven_postgresql_url
-JWT_SECRET=your_jwt_secret
-R2_ACCOUNT_ID=your_r2_account_id
-R2_ACCESS_KEY_ID=your_r2_access_key_id
-R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
-R2_BUCKET_NAME=unicard-files
-R2_PUBLIC_URL=https://your-r2-bucket.r2.dev
-BG_REMOVAL_URL=https://your-railway-app.up.railway.app
-SMTP_HOST=smtp-relay.brevo.com
-SMTP_PORT=587
-EMAIL_SECURE=false
-SMTP_USER=your_brevo_smtp_user
-SMTP_PASS=your_brevo_smtp_password
-SMTP_FROM=your-email@example.com
-SMTP_FROM_NAME=Samiul Graphics
-FRONTEND_URL=https://your-school-portal.vercel.app
-NODE_ENV=production
-```
-
-**Note:** Email OTP verification is disabled. Schools are auto-approved and can login immediately. SMTP is only used for password reset emails.
-
-### Step 3: Deploy
-
-Vercel will automatically deploy the serverless functions.
-
----
-
-## Part 5: Update CORS and URLs
-
-### Update Railway CORS
-
-Go back to Railway and update `CORS_ORIGINS`:
-
-```
-CORS_ORIGINS=https://school-portal.vercel.app,https://admin-portal.vercel.app
-```
-
-### Verify Database Connection
-
-1. Ensure Aiven PostgreSQL is accessible
-2. Test database connection from Vercel
-3. Verify all migrations are applied
-
----
-
-## Part 6: Verify Deployment
-
-### Test Background Removal
-
-```bash
-curl -X POST https://your-railway-app.up.railway.app/health
-```
-
-### Test School Portal
-
-Visit: `https://school-portal.vercel.app`
-
-### Test Admin Portal
-
-Visit: `https://admin-portal.vercel.app`
-
-### Test API
-
-```bash
-curl https://your-vercel-api.vercel.app/api/health
-```
-
----
-
-## Git Commands Summary
-
-### For Background Remover (Separate Repo)
-
-```bash
-cd unicard-serverless/background-removal-service
-git init
-git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/mbvspr-ui/background_remover.git
-git branch -M main
-git push -u origin main
-```
-
-### For Unicard Serverless (Main Repo)
-
-```bash
-cd unicard-serverless
-git init
-
-# Add only necessary files (exclude .md files)
-git add school-portal/
-git add admin-portal/
-git add api/
-git add .gitignore
-git add package.json
-git add README.md
-
-git commit -m "Initial commit: Unicard serverless system"
-git remote add origin https://github.com/mbvspr-ui/unicard-serverless.git
-git branch -M main
-git push -u origin main
-```
-
----
-
-## Environment Variables Reference
-
-### School Portal (.env)
-
-```env
-VITE_API_URL=
-VITE_BG_REMOVAL_URL=
-```
-
-### Admin Portal (.env)
-
-```env
-VITE_API_URL=
-```
-
-### API (.env)
-
-```env
-DATABASE_URL=
-JWT_SECRET=
-R2_ACCOUNT_ID=
-R2_ACCESS_KEY_ID=
-R2_SECRET_ACCESS_KEY=
-R2_BUCKET_NAME=
-R2_PUBLIC_URL=
-BG_REMOVAL_URL=
-SMTP_HOST=
-SMTP_PORT=
-EMAIL_SECURE=
-SMTP_USER=
-SMTP_PASS=
-SMTP_FROM=
-SMTP_FROM_NAME=
-FRONTEND_URL=
-NODE_ENV=production
-```
-
-**Note:** SMTP is used for password reset emails only. OTP verification is disabled
-
-### Background Removal (.env)
-
-```env
-PORT=8080
-FLASK_ENV=production
-CORS_ORIGINS=
-```
-
----
+- **Update Now**: Clears cache and reloads
+- **X (Dismiss)**: Updates version without clearing cache (not recommended)
+
+## Testing Updates Locally
+
+1. Change version in `version.ts`
+2. Run `npm run dev`
+3. Open browser DevTools → Application → Local Storage
+4. Delete the version key (`app_version` or `admin_app_version`)
+5. Refresh page - you should see the update notification
 
 ## Troubleshooting
 
-### Railway Issues
+### Users Not Seeing Update Notification?
+- Check if version was updated in `version.ts`
+- Verify deployment completed successfully
+- Ask users to hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
 
-- Check logs in Railway dashboard
-- Ensure Dockerfile builds successfully
-- Verify environment variables are set
+### Update Notification Keeps Appearing?
+- Check if version in code matches deployed version
+- Clear browser cache manually
+- Check browser console for errors
 
-### Vercel Issues
+## Quick Deployment Checklist
 
-- Check build logs
-- Ensure all environment variables are set
-- Verify root directory is correct
+- [ ] Update `APP_VERSION` in `school-portal/src/utils/version.ts`
+- [ ] Update `APP_VERSION` in `admin-portal/src/utils/version.ts`
+- [ ] Commit with descriptive message
+- [ ] Push to GitHub
+- [ ] Verify Vercel deployment succeeded
+- [ ] Test on one device to confirm update notification appears
 
-### CORS Issues
+## Files Modified
 
-- Update Railway CORS_ORIGINS with actual Vercel URLs
-- Verify Cloudflare R2 CORS settings
+### School Portal:
+- `school-portal/src/utils/version.ts` - Version management
+- `school-portal/src/components/UpdateNotification.tsx` - Update UI
+- `school-portal/src/App.tsx` - Added UpdateNotification component
 
-### Database Issues
+### Admin Portal:
+- `admin-portal/src/utils/version.ts` - Version management
+- `admin-portal/src/components/UpdateNotification.tsx` - Update UI
+- `admin-portal/src/App.tsx` - Added UpdateNotification component
 
-- Check Aiven PostgreSQL connection
-- Verify DATABASE_URL is correct
-- Ensure IP whitelist includes Vercel IPs (or set to 0.0.0.0/0)
+## Benefits
 
----
-
-## Post-Deployment
-
-1. Test all features end-to-end
-2. Monitor Railway and Vercel logs
-3. Set up custom domains (optional)
-4. Configure SSL certificates (automatic on Vercel/Railway)
-5. Set up monitoring and alerts
-
----
-
-## Continuous Deployment
-
-Both Railway and Vercel support automatic deployments:
-
-- **Railway**: Auto-deploys on push to main branch
-- **Vercel**: Auto-deploys on push to main branch
-
-To update:
-
-```bash
-git add .
-git commit -m "Update: description"
-git push origin main
-```
-
----
-
-## Support
-
-For issues:
-- Railway: Check Railway dashboard logs
-- Vercel: Check Vercel deployment logs
-- Supabase: Check Supabase logs and monitoring
+✅ **No More Stale Cache Issues**: Users always get the latest version
+✅ **Automatic Updates**: No manual cache clearing needed
+✅ **Better UX**: Clear notification when updates are available
+✅ **Preserves Auth**: Users stay logged in after update
+✅ **Simple Deployment**: Just increment version and push
