@@ -252,28 +252,36 @@ export const Login = () => {
               )}
             </Button>
 
-            {/* Biometric Login Button */}
+            {/* Biometric Login Button - Enhanced */}
             {biometricAvailable && biometricRegistered && (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                size="lg"
-                onClick={handleBiometricLogin}
-                disabled={biometricLoading}
-              >
-                {biometricLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Authenticating...
-                  </>
-                ) : (
-                  <>
-                    <Fingerprint className="mr-2 h-5 w-5" />
-                    Login with Fingerprint/Face
-                  </>
-                )}
-              </Button>
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg blur opacity-30 animate-pulse"></div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full relative bg-white border-2 border-purple-500 hover:bg-purple-50 hover:border-purple-600 transition-all duration-300"
+                  size="lg"
+                  onClick={handleBiometricLogin}
+                  disabled={biometricLoading}
+                >
+                  {biometricLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin text-purple-600" />
+                      <span className="text-purple-600 font-semibold">Authenticating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mr-2 h-10 w-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse">
+                        <Fingerprint className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <span className="text-purple-600 font-semibold">Quick Login</span>
+                        <span className="text-xs text-gray-500">Use Fingerprint or Face ID</span>
+                      </div>
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
 
             {/* Forgot Password Link */}

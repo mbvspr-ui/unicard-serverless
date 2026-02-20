@@ -21,7 +21,7 @@ import { staffApi, locationApi } from '../lib/api';
 import { StaffInput } from '../types';
 import { Briefcase, Edit2, Trash2, PlusCircle } from 'lucide-react';
 import { Header } from '../components/Header';
-import { addCacheBuster } from '../utils/photo';
+import { addCacheBuster, clearPhotoCache } from '../utils/photo';
 
 const STAFF_TYPES = ['Teaching', 'Non-Teaching', 'Administrative', 'Support'];
 const GENDERS = ['Male', 'Female', 'Other'];
@@ -383,6 +383,9 @@ export default function EditStaff() {
           const photoResponse = await staffApi.uploadPhoto(staffId, photoFile);
           if (!photoResponse.success) {
             toast.warning('Staff updated but photo upload failed. You can update it later.');
+          } else {
+            // Force immediate cache clear for the photo
+            await clearPhotoCache(currentPhotoUrl);
           }
         } catch (photoError) {
           console.error('Photo upload error:', photoError);
@@ -391,9 +394,7 @@ export default function EditStaff() {
       }
 
       toast.success('Staff member updated successfully!');
-      setTimeout(() => {
-        navigate('/staff');
-      }, 500);
+      navigate('/staff');
     } catch (error) {
       console.error('Update error:', error);
       toast.error('An error occurred while updating staff member');
@@ -462,6 +463,9 @@ export default function EditStaff() {
             const photoResponse = await staffApi.uploadPhoto(staffId, photoFile);
             if (!photoResponse.success) {
               toast.warning('Staff updated but photo upload failed. You can update it later.');
+            } else {
+              // Force immediate cache clear for the photo
+              await clearPhotoCache(currentPhotoUrl);
             }
           } catch (photoError) {
             console.error('Photo upload error:', photoError);

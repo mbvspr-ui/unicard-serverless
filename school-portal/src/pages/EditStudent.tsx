@@ -20,7 +20,7 @@ import { PhotoEditor } from '../components/PhotoEditor';
 import { studentApi, locationApi } from '../lib/api';
 import { StudentInput } from '../types';
 import { PlusCircle, Edit2, Trash2 } from 'lucide-react';
-import { addCacheBuster } from '../utils/photo';
+import { addCacheBuster, clearPhotoCache } from '../utils/photo';
 
 const CLASSES = [
   'Nursery', 'LKG', 'UKG',
@@ -363,6 +363,9 @@ export default function EditStudent() {
           const photoResponse = await studentApi.uploadPhoto(studentId, photoFile);
           if (!photoResponse.success) {
             toast.warning('Student updated but photo upload failed. You can update it later.');
+          } else {
+            // Force immediate cache clear for the photo
+            await clearPhotoCache(currentPhotoUrl);
           }
         } catch (photoError) {
           console.error('Photo upload error:', photoError);
@@ -371,10 +374,8 @@ export default function EditStudent() {
       }
 
       toast.success('Student updated successfully!');
-      // Add a small delay to ensure photo is processed
-      setTimeout(() => {
-        navigate('/students');
-      }, 500);
+      // Navigate immediately - the list will show updated photo with cache buster
+      navigate('/students');
     } catch (error) {
       console.error('Update error:', error);
       toast.error('An error occurred while updating the student');
