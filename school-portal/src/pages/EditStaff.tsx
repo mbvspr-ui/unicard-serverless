@@ -739,92 +739,255 @@ export default function EditStaff() {
             {/* Employment Information */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4">Employment Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput
-                  label="Employee ID"
-                  value={formData.employee_id}
-                  onChange={(e) => handleInputChange('employee_id', e.target.value)}
-                  placeholder="Enter employee ID"
-                />
-                <FormSelect
-                  label="Staff Type *"
-                  value={formData.staff_type}
-                  onValueChange={(value) => handleInputChange('staff_type', value as any)}
-                  options={STAFF_TYPES.map(t => ({ value: t, label: t }))}
-                  error={errors.staff_type}
-                />
-                <FormInput
-                  label="Designation *"
-                  value={formData.designation}
-                  onChange={(e) => handleInputChange('designation', e.target.value)}
-                  error={errors.designation}
-                  placeholder="e.g., Mathematics Teacher"
-                />
-                <FormInput
-                  label="Department/Subject"
-                  value={formData.department}
-                  onChange={(e) => handleInputChange('department', e.target.value)}
-                  placeholder="e.g., Mathematics"
-                />
-                <FormInput
-                  label="Date of Joining"
-                  type="date"
-                  value={formData.date_of_joining}
-                  onChange={(e) => handleInputChange('date_of_joining', e.target.value)}
-                />
-                <FormInput
-                  label="Qualification"
-                  value={formData.qualification}
-                  onChange={(e) => handleInputChange('qualification', e.target.value)}
-                  placeholder="e.g., B.Ed, M.Sc"
-                />
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-employee-id"
+                      checked={selectedFields.has('employee_id')}
+                      onCheckedChange={(checked) => toggleField('employee_id', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Employee ID"
+                        value={formData.employee_id}
+                        onChange={(e) => handleInputChange('employee_id', e.target.value)}
+                        disabled={!selectedFields.has('employee_id')}
+                        placeholder="Enter employee ID"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-staff-type"
+                      checked={selectedFields.has('staff_type')}
+                      onCheckedChange={(checked) => toggleField('staff_type', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormSelect
+                        label="Staff Type"
+                        value={formData.staff_type}
+                        onValueChange={(value) => handleInputChange('staff_type', value as any)}
+                        options={STAFF_TYPES.map(t => ({ value: t, label: t }))}
+                        error={errors.staff_type}
+                        disabled={!selectedFields.has('staff_type')}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-designation"
+                      checked={selectedFields.has('designation')}
+                      onCheckedChange={(checked) => toggleField('designation', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Designation"
+                        value={formData.designation}
+                        onChange={(e) => handleInputChange('designation', e.target.value)}
+                        error={errors.designation}
+                        disabled={!selectedFields.has('designation')}
+                        placeholder="e.g., Mathematics Teacher"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-department"
+                      checked={selectedFields.has('department')}
+                      onCheckedChange={(checked) => toggleField('department', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Department/Subject"
+                        value={formData.department}
+                        onChange={(e) => handleInputChange('department', e.target.value)}
+                        disabled={!selectedFields.has('department')}
+                        placeholder="e.g., Mathematics"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-date-joining"
+                      checked={selectedFields.has('date_of_joining')}
+                      onCheckedChange={(checked) => toggleField('date_of_joining', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      {!selectedFields.has('date_of_joining') && formData.date_of_joining ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Date of Joining
+                          </label>
+                          <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+                            {new Date(formData.date_of_joining).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <FormInput
+                          label="Date of Joining"
+                          type="date"
+                          value={formData.date_of_joining}
+                          onChange={(e) => handleInputChange('date_of_joining', e.target.value)}
+                          disabled={!selectedFields.has('date_of_joining')}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-qualification"
+                      checked={selectedFields.has('qualification')}
+                      onCheckedChange={(checked) => toggleField('qualification', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Qualification"
+                        value={formData.qualification}
+                        onChange={(e) => handleInputChange('qualification', e.target.value)}
+                        disabled={!selectedFields.has('qualification')}
+                        placeholder="e.g., B.Ed, M.Sc"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Address Information */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4">Address Information</h3>
-              <div className="grid grid-cols-1 gap-4">
-                <FormTextarea
-                  label="Address"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
-                  placeholder="Enter full address"
-                  rows={2}
-                />
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="edit-address"
+                    checked={selectedFields.has('address')}
+                    onCheckedChange={(checked) => toggleField('address', checked as boolean)}
+                    className="mt-8"
+                    title="Check to edit this field"
+                  />
+                  <div className="flex-1">
+                    <FormTextarea
+                      label="Address"
+                      value={formData.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      disabled={!selectedFields.has('address')}
+                      placeholder="Enter full address"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormSelect
-                    label="State *"
-                    value={formData.state}
-                    onValueChange={handleStateChange}
-                    options={states.map(s => ({ value: s, label: s }))}
-                    error={errors.state}
-                    placeholder="Select state"
-                  />
-                  <FormSelect
-                    label="District *"
-                    value={formData.district}
-                    onValueChange={(value) => handleInputChange('district', value)}
-                    options={districts.map(d => ({ value: d, label: d }))}
-                    error={errors.district}
-                    placeholder="Select district"
-                    disabled={!formData.state || loadingDistricts}
-                  />
-                  <FormInput
-                    label="City *"
-                    value={formData.city}
-                    onChange={(e) => handleInputChange('city', e.target.value)}
-                    error={errors.city}
-                    placeholder="Enter city"
-                  />
-                  <FormInput
-                    label="Pincode *"
-                    value={formData.pincode}
-                    onChange={(e) => handleInputChange('pincode', e.target.value)}
-                    error={errors.pincode}
-                    placeholder="Enter 6-digit pincode"
-                    maxLength={6}
-                  />
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-state"
+                      checked={selectedFields.has('state')}
+                      onCheckedChange={(checked) => toggleField('state', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormSelect
+                        label="State"
+                        value={formData.state}
+                        onValueChange={handleStateChange}
+                        options={states.map(s => ({ value: s, label: s }))}
+                        error={errors.state}
+                        disabled={!selectedFields.has('state')}
+                        placeholder="Select state"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-district"
+                      checked={selectedFields.has('district')}
+                      onCheckedChange={(checked) => toggleField('district', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormSelect
+                        label="District"
+                        value={formData.district}
+                        onValueChange={(value) => handleInputChange('district', value)}
+                        options={districts.map(d => ({ value: d, label: d }))}
+                        error={errors.district}
+                        disabled={!selectedFields.has('district') || !formData.state || loadingDistricts}
+                        placeholder="Select district"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-city"
+                      checked={selectedFields.has('city')}
+                      onCheckedChange={(checked) => toggleField('city', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="City"
+                        value={formData.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                        error={errors.city}
+                        disabled={!selectedFields.has('city')}
+                        placeholder="Enter city"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-pincode"
+                      checked={selectedFields.has('pincode')}
+                      onCheckedChange={(checked) => toggleField('pincode', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Pincode"
+                        value={formData.pincode}
+                        onChange={(e) => handleInputChange('pincode', e.target.value)}
+                        error={errors.pincode}
+                        disabled={!selectedFields.has('pincode')}
+                        placeholder="Enter 6-digit pincode"
+                        maxLength={6}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -832,25 +995,65 @@ export default function EditStaff() {
             {/* Emergency Contact */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4">Emergency Contact</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput
-                  label="Contact Name"
-                  value={formData.emergency_contact_name}
-                  onChange={(e) => handleInputChange('emergency_contact_name', e.target.value)}
-                  placeholder="Enter contact name"
-                />
-                <FormInput
-                  label="Contact Number"
-                  value={formData.emergency_contact_number}
-                  onChange={(e) => handleInputChange('emergency_contact_number', e.target.value)}
-                  placeholder="+919876543210"
-                />
-                <FormInput
-                  label="Relationship"
-                  value={formData.emergency_contact_relationship}
-                  onChange={(e) => handleInputChange('emergency_contact_relationship', e.target.value)}
-                  placeholder="e.g., Spouse, Parent"
-                />
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-emergency-name"
+                      checked={selectedFields.has('emergency_contact_name')}
+                      onCheckedChange={(checked) => toggleField('emergency_contact_name', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Contact Name"
+                        value={formData.emergency_contact_name}
+                        onChange={(e) => handleInputChange('emergency_contact_name', e.target.value)}
+                        disabled={!selectedFields.has('emergency_contact_name')}
+                        placeholder="Enter contact name"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-emergency-number"
+                      checked={selectedFields.has('emergency_contact_number')}
+                      onCheckedChange={(checked) => toggleField('emergency_contact_number', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Contact Number"
+                        value={formData.emergency_contact_number}
+                        onChange={(e) => handleInputChange('emergency_contact_number', e.target.value)}
+                        disabled={!selectedFields.has('emergency_contact_number')}
+                        placeholder="+919876543210"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="edit-emergency-relationship"
+                    checked={selectedFields.has('emergency_contact_relationship')}
+                    onCheckedChange={(checked) => toggleField('emergency_contact_relationship', checked as boolean)}
+                    className="mt-8"
+                    title="Check to edit this field"
+                  />
+                  <div className="flex-1">
+                    <FormInput
+                      label="Relationship"
+                      value={formData.emergency_contact_relationship}
+                      onChange={(e) => handleInputChange('emergency_contact_relationship', e.target.value)}
+                      disabled={!selectedFields.has('emergency_contact_relationship')}
+                      placeholder="e.g., Spouse, Parent"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
