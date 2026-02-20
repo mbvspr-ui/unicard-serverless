@@ -7,10 +7,19 @@ import { FormInput } from '../components/ui/form-input';
 import { FormSelect } from '../components/ui/form-select';
 import { FormTextarea } from '../components/ui/form-textarea';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
+import { Checkbox } from '../components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
 import { PhotoEditor } from '../components/PhotoEditor';
 import { staffApi, locationApi } from '../lib/api';
 import { StaffInput } from '../types';
-import { Briefcase, Edit2, Trash2 } from 'lucide-react';
+import { Briefcase, Edit2, Trash2, PlusCircle } from 'lucide-react';
 import { Header } from '../components/Header';
 import { addCacheBuster } from '../utils/photo';
 
@@ -27,6 +36,11 @@ export default function EditStaff() {
   const [districts, setDistricts] = useState<string[]>([]);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Field selection for editing
+  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
+  const [originalData, setOriginalData] = useState<any>(null);
+  const [showPreview, setShowPreview] = useState(false);
   
   // Photo state
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
@@ -86,6 +100,29 @@ export default function EditStaff() {
           };
           
           setFormData({
+            name: staff.name,
+            father_spouse_name: staff.father_spouse_name || '',
+            date_of_birth: formatDateForInput(staff.date_of_birth),
+            gender: staff.gender,
+            phone_number: staff.phone_number || '+91',
+            blood_group: staff.blood_group || '',
+            employee_id: staff.employee_id || '',
+            staff_type: staff.staff_type,
+            designation: staff.designation,
+            department: staff.department || '',
+            date_of_joining: formatDateForInput(staff.date_of_joining),
+            qualification: staff.qualification || '',
+            address: staff.address || '',
+            state: staff.state,
+            district: staff.district,
+            city: staff.city,
+            pincode: staff.pincode,
+            emergency_contact_name: staff.emergency_contact_name || '',
+            emergency_contact_number: staff.emergency_contact_number || '+91',
+            emergency_contact_relationship: staff.emergency_contact_relationship || '',
+          });
+          
+          setOriginalData({
             name: staff.name,
             father_spouse_name: staff.father_spouse_name || '',
             date_of_birth: formatDateForInput(staff.date_of_birth),
@@ -219,6 +256,152 @@ export default function EditStaff() {
     };
   }, [photoPreview]);
 
+  // Toggle field selection for editing
+  const toggleField = (field: string, checked: boolean) => {
+    setSelectedFields(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(field);
+      } else {
+        newSet.delete(field);
+      }
+      return newSet;
+    });
+  };
+
+  // Show preview dialog
+  const handleShowPreview = () => {
+    if (selectedFields.size === 0 && !photoBlob) {
+      toast.error('Please select at least one field to edit or update the photo');
+      return;
+    }
+    
+    // Validate only selected fields with specific error messages
+    const newErrors: Record<string, string> = {};
+    const fieldLabels: Record<string, string> = {
+      name: 'Full Name',
+      father_spouse_name: "Father's/Spouse Name",
+      date_of_birth: 'Date of Birth',
+      gender: 'Gender',
+      phone_number: 'Phone Number',
+      blood_group: 'Blood Group',
+      employee_id: 'Employee ID',
+      staff_type: 'Staff Type',
+      designation: 'Designation',
+      department: 'Department/Subject',
+      date_of_joining: 'Date of Joining',
+      qualification: 'Qualification',
+      address: 'Address',
+      state: 'State',
+      district: 'District',
+      city: 'City',
+      pincode: 'Pincode',
+      emergency_contact_name: 'Emergency Contact Name',
+      emergency_contact_number: 'Emergency Contact Number',
+      emergency_contact_relationship: 'Emergency Contact Relationship',
+    };
+    
+    selectedFields.forEach(field => {
+      const value = formData[field as keyof StaffInput];
+      const label = fieldLabels[field] || field;
+      
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        newErrors[field] = `${label} is required`;
+      } else if (field === 'phone_number' && typeof value === 'string') {
+        if (value !== '+91' && value.length < 10) {
+          newErrors[field] = 'Phone number must be at least 10 digits';
+        }
+      } else if (field === 'pincode' && typeof value === 'string') {
+        if (value.length !== 6) {
+          newErrors[field] = 'Pincode must be exactly 6 digits';
+        }
+      }
+    });
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      const firstError = Object.values(newErrors)[0];
+      toast.error(firstError);
+      return;
+    }
+    
+    setShowPreview(true);
+  };
+
+  // Confirm and save changes
+  const handleConfirmSave = async () => {
+    if (!staffId) {
+      toast.error('Staff ID is missing');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Build update object with only selected fields
+      const updates: any = {};
+      selectedFields.forEach(field => {
+        updates[field] = formData[field as keyof StaffInput];
+      });
+      
+      // Clean up phone numbers
+      if (updates.phone_number === '+91') {
+        updates.phone_number = undefined;
+      }
+      if (updates.emergency_contact_number === '+91') {
+        updates.emergency_contact_number = undefined;
+      }
+
+      // Only call update API if there are fields to update
+      if (Object.keys(updates).length > 0) {
+        const response = await staffApi.update(staffId, updates);
+
+        if (!response.success) {
+          if (response.error?.details) {
+            const apiErrors: Record<string, string> = {};
+            response.error.details.forEach((err: any) => {
+              if (err.path && err.path.length > 0) {
+                apiErrors[err.path[0]] = err.message;
+              }
+            });
+            setErrors(apiErrors);
+            setShowPreview(false);
+            toast.error(response.error?.message || 'Failed to update staff member');
+            setSaving(false);
+            return;
+          } else {
+            toast.error(response.error?.message || 'Failed to update staff member');
+            setSaving(false);
+            return;
+          }
+        }
+      }
+
+      // Upload new photo if changed
+      if (photoBlob) {
+        try {
+          const photoFile = new File([photoBlob], 'staff-photo.jpg', { type: 'image/jpeg' });
+          const photoResponse = await staffApi.uploadPhoto(staffId, photoFile);
+          if (!photoResponse.success) {
+            toast.warning('Staff updated but photo upload failed. You can update it later.');
+          }
+        } catch (photoError) {
+          console.error('Photo upload error:', photoError);
+          toast.warning('Staff updated but photo upload failed. You can update it later.');
+        }
+      }
+
+      toast.success('Staff member updated successfully!');
+      setTimeout(() => {
+        navigate('/staff');
+      }, 500);
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error('An error occurred while updating staff member');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -325,39 +508,67 @@ export default function EditStaff() {
       <Header title="Edit Staff Member" showBack />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <form onSubmit={handleSubmit}>
-          <Card className="p-6">
+        <Card className="p-4 md:p-6">
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>How to edit:</strong> Check the box next to each field you want to update, 
+              make your changes, then click "Preview Changes" to review before saving.
+            </p>
+            {selectedFields.size > 0 && (
+              <p className="text-sm text-blue-600 mt-2">
+                ✓ {selectedFields.size} field{selectedFields.size > 1 ? 's' : ''} selected for editing
+              </p>
+            )}
+          </div>
+
+          <form onSubmit={(e) => { e.preventDefault(); handleShowPreview(); }}>
             {/* Photo Section */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4">Photo</h3>
               <div className="flex flex-col items-center gap-4">
                 {photoPreview || currentPhotoUrl ? (
                   <div className="space-y-3">
-                    <img
-                      src={photoPreview || currentPhotoUrl || ''}
-                      alt="Staff photo"
-                      className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
-                    />
+                    <div className="relative inline-block">
+                      <img
+                        src={photoPreview || currentPhotoUrl || ''}
+                        alt="Staff photo"
+                        className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
+                      />
+                      {photoBlob && (
+                        <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                          New
+                        </div>
+                      )}
+                    </div>
                     <div className="flex gap-2 justify-center">
                       <Button
                         type="button"
                         onClick={() => setShowPhotoEditor(true)}
                         variant="outline"
                         size="sm"
+                        className="min-h-[44px]"
                       >
                         <Edit2 className="w-4 h-4 mr-2" />
-                        Edit Photo
+                        Change Photo
                       </Button>
-                      <Button
-                        type="button"
-                        onClick={handleRemovePhoto}
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Remove
-                      </Button>
+                      {photoBlob && (
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            if (photoPreview) {
+                              URL.revokeObjectURL(photoPreview);
+                            }
+                            setPhotoBlob(null);
+                            setPhotoPreview(null);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="min-h-[44px] text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Cancel New Photo
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -369,9 +580,14 @@ export default function EditStaff() {
                       type="button"
                       onClick={() => setShowPhotoEditor(true)}
                       variant="outline"
+                      className="min-h-[44px]"
                     >
+                      <PlusCircle className="w-4 h-4 mr-2" />
                       Add Photo
                     </Button>
+                    <p className="text-sm text-gray-500 mt-2 text-center">
+                      Click to open photo editor
+                    </p>
                   </div>
                 )}
               </div>
@@ -380,47 +596,143 @@ export default function EditStaff() {
             {/* Personal Information */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput
-                  label="Full Name *"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  error={errors.name}
-                  placeholder="Enter full name"
-                />
-                <FormInput
-                  label="Father's/Spouse Name"
-                  value={formData.father_spouse_name}
-                  onChange={(e) => handleInputChange('father_spouse_name', e.target.value)}
-                  placeholder="Enter father's or spouse name"
-                />
-                <FormInput
-                  label="Date of Birth"
-                  type="date"
-                  value={formData.date_of_birth}
-                  onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                />
-                <FormSelect
-                  label="Gender"
-                  value={formData.gender}
-                  onValueChange={(value) => handleInputChange('gender', value)}
-                  options={GENDERS.map(g => ({ value: g, label: g }))}
-                  placeholder="Select gender"
-                />
-                <FormInput
-                  label="Phone Number"
-                  value={formData.phone_number}
-                  onChange={(e) => handleInputChange('phone_number', e.target.value)}
-                  error={errors.phone_number}
-                  placeholder="+919876543210"
-                />
-                <FormSelect
-                  label="Blood Group"
-                  value={formData.blood_group}
-                  onValueChange={(value) => handleInputChange('blood_group', value)}
-                  options={BLOOD_GROUPS.map(bg => ({ value: bg, label: bg }))}
-                  placeholder="Select blood group"
-                />
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="edit-name"
+                    checked={selectedFields.has('name')}
+                    onCheckedChange={(checked) => toggleField('name', checked as boolean)}
+                    className="mt-8"
+                    title="Check to edit this field"
+                  />
+                  <div className="flex-1">
+                    <FormInput
+                      label="Full Name"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      error={errors.name}
+                      disabled={!selectedFields.has('name')}
+                      placeholder="Enter full name"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-father-spouse"
+                      checked={selectedFields.has('father_spouse_name')}
+                      onCheckedChange={(checked) => toggleField('father_spouse_name', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Father's/Spouse Name"
+                        value={formData.father_spouse_name}
+                        onChange={(e) => handleInputChange('father_spouse_name', e.target.value)}
+                        disabled={!selectedFields.has('father_spouse_name')}
+                        placeholder="Enter father's or spouse name"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-dob"
+                      checked={selectedFields.has('date_of_birth')}
+                      onCheckedChange={(checked) => toggleField('date_of_birth', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      {!selectedFields.has('date_of_birth') && formData.date_of_birth ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Date of Birth
+                          </label>
+                          <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+                            {new Date(formData.date_of_birth).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <FormInput
+                          label="Date of Birth"
+                          type="date"
+                          value={formData.date_of_birth}
+                          onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                          disabled={!selectedFields.has('date_of_birth')}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-gender"
+                      checked={selectedFields.has('gender')}
+                      onCheckedChange={(checked) => toggleField('gender', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormSelect
+                        label="Gender"
+                        value={formData.gender}
+                        onValueChange={(value) => handleInputChange('gender', value)}
+                        options={GENDERS.map(g => ({ value: g, label: g }))}
+                        disabled={!selectedFields.has('gender')}
+                        placeholder="Select gender"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="edit-phone"
+                      checked={selectedFields.has('phone_number')}
+                      onCheckedChange={(checked) => toggleField('phone_number', checked as boolean)}
+                      className="mt-8"
+                      title="Check to edit this field"
+                    />
+                    <div className="flex-1">
+                      <FormInput
+                        label="Phone Number"
+                        value={formData.phone_number}
+                        onChange={(e) => handleInputChange('phone_number', e.target.value)}
+                        error={errors.phone_number}
+                        disabled={!selectedFields.has('phone_number')}
+                        placeholder="+919876543210"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="edit-blood-group"
+                    checked={selectedFields.has('blood_group')}
+                    onCheckedChange={(checked) => toggleField('blood_group', checked as boolean)}
+                    className="mt-8"
+                    title="Check to edit this field"
+                  />
+                  <div className="flex-1">
+                    <FormSelect
+                      label="Blood Group"
+                      value={formData.blood_group}
+                      onValueChange={(value) => handleInputChange('blood_group', value)}
+                      options={BLOOD_GROUPS.map(bg => ({ value: bg, label: bg }))}
+                      disabled={!selectedFields.has('blood_group')}
+                      placeholder="Select blood group"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -549,34 +861,116 @@ export default function EditStaff() {
                 variant="outline"
                 onClick={() => navigate('/staff')}
                 disabled={saving}
-                className="flex-1"
+                className="flex-1 min-h-[44px]"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={saving}
-                className="flex-1"
+                className="flex-1 min-h-[44px]"
               >
-                {saving ? (
-                  <>
-                    <LoadingSpinner className="mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
+                Preview Changes
               </Button>
             </div>
-          </Card>
-        </form>
+          </form>
+        </Card>
       </div>
+
+      {/* Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Preview Changes</DialogTitle>
+            <DialogDescription>
+              Review the changes before saving. Click "Confirm & Save" to apply the changes.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {selectedFields.size > 0 && (
+              <div>
+                <h4 className="font-semibold mb-2">Fields to Update:</h4>
+                <div className="space-y-2">
+                  {Array.from(selectedFields).map(field => {
+                    const value = formData[field as keyof StaffInput];
+                    const fieldLabels: Record<string, string> = {
+                      name: 'Full Name',
+                      father_spouse_name: "Father's/Spouse Name",
+                      date_of_birth: 'Date of Birth',
+                      gender: 'Gender',
+                      phone_number: 'Phone Number',
+                      blood_group: 'Blood Group',
+                      employee_id: 'Employee ID',
+                      staff_type: 'Staff Type',
+                      designation: 'Designation',
+                      department: 'Department/Subject',
+                      date_of_joining: 'Date of Joining',
+                      qualification: 'Qualification',
+                      address: 'Address',
+                      state: 'State',
+                      district: 'District',
+                      city: 'City',
+                      pincode: 'Pincode',
+                      emergency_contact_name: 'Emergency Contact Name',
+                      emergency_contact_number: 'Emergency Contact Number',
+                      emergency_contact_relationship: 'Emergency Contact Relationship',
+                    };
+                    
+                    return (
+                      <div key={field} className="flex justify-between p-2 bg-gray-50 rounded">
+                        <span className="font-medium">{fieldLabels[field] || field}:</span>
+                        <span className="text-gray-700">
+                          {field.includes('date') && value
+                            ? new Date(value as string).toLocaleDateString()
+                            : value || 'N/A'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {photoBlob && (
+              <div>
+                <h4 className="font-semibold mb-2">Photo Update:</h4>
+                <p className="text-sm text-gray-600">A new photo will be uploaded</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowPreview(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmSave}
+              disabled={saving}
+            >
+              {saving ? (
+                <>
+                  <LoadingSpinner className="mr-2" />
+                  Saving...
+                </>
+              ) : (
+                'Confirm & Save'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Photo Editor Dialog */}
       {showPhotoEditor && (
         <PhotoEditor
           onSave={handlePhotoSaved}
           onClose={() => setShowPhotoEditor(false)}
+          initialImage={photoPreview || currentPhotoUrl}
         />
       )}
     </div>
