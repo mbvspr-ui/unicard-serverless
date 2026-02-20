@@ -6,10 +6,17 @@ import { Card } from '../components/ui/card';
 import { FormInput } from '../components/ui/form-input';
 import { FormSelect } from '../components/ui/form-select';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
 import { Header } from '../components/Header';
 import { staffApi } from '../lib/api';
 import { Staff } from '../types';
-import { RefreshCw, Edit, Trash2, Briefcase } from 'lucide-react';
+import { RefreshCw, Edit, Trash2, Briefcase, Eye } from 'lucide-react';
 
 const STAFF_TYPES = ['Teaching', 'Non-Teaching', 'Administrative', 'Support'];
 
@@ -25,6 +32,8 @@ export default function StaffList() {
   const [totalStaff, setTotalStaff] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
   const [departments, setDepartments] = useState<string[]>([]);
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   const limit = 50;
 
@@ -113,6 +122,26 @@ export default function StaffList() {
     } catch (error) {
       console.error('Delete error:', error);
       toast.error('An error occurred while deleting the staff member');
+    }
+  };
+
+  // Handle view details
+  const handleViewDetails = (member: Staff) => {
+    setSelectedStaff(member);
+    setShowDetailsDialog(true);
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return 'N/A';
     }
   };
 
@@ -288,6 +317,15 @@ export default function StaffList() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => handleViewDetails(member)}
+                          className="flex-1"
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => navigate(`/staff/edit/${member.id}`)}
                           className="flex-1"
                         >
@@ -334,6 +372,167 @@ export default function StaffList() {
           </>
         )}
       </div>
+
+      {/* Staff Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Staff Details</DialogTitle>
+            <DialogDescription>
+              Complete information about the staff member
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedStaff && (
+            <div className="space-y-6 py-4">
+              {/* Photo and Basic Info */}
+              <div className="flex items-start gap-4">
+                {selectedStaff.photo_url ? (
+                  <img
+                    src={selectedStaff.photo_url}
+                    alt={selectedStaff.name}
+                    className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-300">
+                    <Briefcase className="w-12 h-12 text-gray-400" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold">{selectedStaff.name}</h3>
+                  <p className="text-gray-600">{selectedStaff.designation}</p>
+                  {selectedStaff.employee_id && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      Employee ID: {selectedStaff.employee_id}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Personal Information */}
+              <div>
+                <h4 className="font-semibold mb-3 text-gray-900">Personal Information</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-gray-500">Father's/Spouse Name:</span>
+                    <p className="font-medium">{selectedStaff.father_spouse_name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Date of Birth:</span>
+                    <p className="font-medium">{formatDate(selectedStaff.date_of_birth)}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Gender:</span>
+                    <p className="font-medium">{selectedStaff.gender || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Blood Group:</span>
+                    <p className="font-medium">{selectedStaff.blood_group || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Phone Number:</span>
+                    <p className="font-medium">{selectedStaff.phone_number || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Employment Information */}
+              <div>
+                <h4 className="font-semibold mb-3 text-gray-900">Employment Information</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-gray-500">Staff Type:</span>
+                    <p className="font-medium">{selectedStaff.staff_type}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Department:</span>
+                    <p className="font-medium">{selectedStaff.department || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Date of Joining:</span>
+                    <p className="font-medium">{formatDate(selectedStaff.date_of_joining)}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Qualification:</span>
+                    <p className="font-medium">{selectedStaff.qualification || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Address Information */}
+              <div>
+                <h4 className="font-semibold mb-3 text-gray-900">Address Information</h4>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="text-gray-500">Address:</span>
+                    <p className="font-medium">{selectedStaff.address || 'N/A'}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-gray-500">City:</span>
+                      <p className="font-medium">{selectedStaff.city}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">District:</span>
+                      <p className="font-medium">{selectedStaff.district}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">State:</span>
+                      <p className="font-medium">{selectedStaff.state}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Pincode:</span>
+                      <p className="font-medium">{selectedStaff.pincode}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Emergency Contact */}
+              {(selectedStaff.emergency_contact_name || selectedStaff.emergency_contact_number) && (
+                <div>
+                  <h4 className="font-semibold mb-3 text-gray-900">Emergency Contact</h4>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-gray-500">Contact Name:</span>
+                      <p className="font-medium">{selectedStaff.emergency_contact_name || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Contact Number:</span>
+                      <p className="font-medium">{selectedStaff.emergency_contact_number || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Relationship:</span>
+                      <p className="font-medium">{selectedStaff.emergency_contact_relationship || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-4 border-t">
+                <Button
+                  onClick={() => {
+                    setShowDetailsDialog(false);
+                    navigate(`/staff/edit/${selectedStaff.id}`);
+                  }}
+                  className="flex-1"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Staff
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDetailsDialog(false)}
+                  className="flex-1"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
