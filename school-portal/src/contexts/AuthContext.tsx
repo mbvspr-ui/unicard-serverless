@@ -49,9 +49,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       } else {
         // Token expired or missing
-        if (token && isTokenExpired(loginTime)) {
-          console.log('Session expired. Please login again.');
-        }
         clearAuthData();
         setState({ isAuthenticated: false, school: null, token: null, loading: false });
       }
@@ -63,7 +60,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const intervalId = setInterval(() => {
       const loginTime = localStorage.getItem('login_time');
       if (isTokenExpired(loginTime)) {
-        console.log('Session expired during use.');
         clearAuthData();
         setState({ isAuthenticated: false, school: null, token: null, loading: false });
       }
@@ -96,10 +92,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('login_time', loginTime);
     
     // Store must change password flag
-    console.log('Login response mustChangePassword:', data.mustChangePassword);
     if (data.mustChangePassword) {
       localStorage.setItem('must_change_password', 'true');
-      console.log('Set must_change_password flag in localStorage');
     } else {
       localStorage.removeItem('must_change_password');
     }

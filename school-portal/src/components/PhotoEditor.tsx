@@ -98,14 +98,11 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
   }, [stream]);
 
   const drawImage = () => {
-    console.log('drawImage called');
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx || !image) {
-      console.log('drawImage skipped - canvas:', !!canvas, 'ctx:', !!ctx, 'image:', !!image);
       return;
     }
-    console.log('Drawing image:', image.width, 'x', image.height);
 
     // Calculate canvas size
     const { width, height } = calculateResizedDimensions(image.width, image.height, 800);
@@ -204,10 +201,6 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
         return;
       }
 
-      console.log('Requesting camera access...');
-      console.log('Browser:', navigator.userAgent);
-      console.log('Protocol:', window.location.protocol);
-      
       // First, set camera active to show the video element
       setIsCameraActive(true);
       setIsCameraReady(false);
@@ -220,26 +213,15 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
         }
       });
       
-      console.log('Camera access granted!');
-      console.log('Stream tracks:', mediaStream.getTracks().map(t => ({
-        kind: t.kind,
-        label: t.label,
-        enabled: t.enabled,
-        readyState: t.readyState
-      })));
-      
       setStream(mediaStream);
       
       if (videoRef.current) {
-        console.log('Setting video srcObject...');
         videoRef.current.srcObject = mediaStream;
         
         // Wait for video to be ready
         videoRef.current.onloadedmetadata = () => {
-          console.log('Video metadata loaded, attempting to play...');
           videoRef.current?.play()
             .then(() => {
-              console.log('Video playing successfully!');
               setIsCameraReady(true);
               toast.success('Camera ready! Position yourself and click Capture.');
             })
@@ -279,12 +261,10 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
           setIsCameraActive(true);
           setIsCameraReady(false);
           const simpleStream = await navigator.mediaDevices.getUserMedia({ video: true });
-          console.log('Simple stream obtained:', simpleStream);
           setStream(simpleStream);
           if (videoRef.current) {
             videoRef.current.srcObject = simpleStream;
             await videoRef.current.play();
-            console.log('Playing with simple constraints');
             setIsCameraReady(true);
           }
           toast.success('Camera started with default settings!');
@@ -301,16 +281,10 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
   };
 
   const capturePhoto = async () => {
-    console.log('capturePhoto called');
-    console.log('videoRef.current:', videoRef.current);
-    console.log('canvasRef.current:', canvasRef.current);
-    
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
-      
-      console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
       
       if (!ctx) {
         console.error('Failed to get canvas context');
@@ -325,15 +299,12 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
         return;
       }
 
-      console.log('Setting canvas dimensions and drawing...');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
 
-      console.log('Converting to blob...');
       try {
         const blob = await canvasToBlob(canvas, 'image/jpeg', 0.95);
-        console.log('Blob created:', blob);
         
         // Compress if needed
         const { compressImageIfNeeded } = await import('../utils/imageProcessing');
@@ -341,7 +312,6 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
         
         const img = new Image();
         img.onload = () => {
-          console.log('Image loaded from blob');
           setImage(img);
           setOriginalImage(img);
           stopCamera();
@@ -354,8 +324,6 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
       }
     } else {
       console.error('videoRef or canvasRef is null');
-      console.log('videoRef.current:', videoRef.current);
-      console.log('canvasRef.current:', canvasRef.current);
       toast.error('Camera or canvas not ready. Please try again.');
     }
   };
@@ -465,20 +433,14 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
   };
 
   const handleCropApply = async (croppedCanvas: HTMLCanvasElement) => {
-    console.log('handleCropApply called');
-    console.log('Cropped canvas dimensions:', croppedCanvas.width, 'x', croppedCanvas.height);
-    
     setIsProcessing(true);
     try {
       // Create new image from cropped canvas
       const blob = await canvasToBlob(croppedCanvas, 'image/png');
-      console.log('Blob created:', blob?.size, 'bytes');
       
       const imageUrl = URL.createObjectURL(blob);
-      console.log('Image URL created:', imageUrl);
       
       const img = await loadImage(imageUrl);
-      console.log('Image loaded:', img.width, 'x', img.height);
       
       // Close crop overlay first
       setIsCropping(false);
@@ -487,7 +449,6 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
       setImage(img);
       setOriginalImage(img);
       
-      console.log('Image state updated');
       toast.success('Crop applied successfully!');
     } catch (error) {
       console.error('Crop error:', error);
@@ -583,10 +544,7 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
                 Upload Photo
               </Button>
               <Button
-                onClick={() => {
-                  console.log('Camera button clicked');
-                  startCamera();
-                }}
+                onClick={startCamera}
                 variant="outline"
                 className="w-full h-12"
                 title="Take a photo with your camera"
@@ -754,12 +712,9 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
                   </div>
                   <Button
                     onClick={() => {
-                      console.log('Change Photo clicked');
-                      console.log('fileInputRef.current:', fileInputRef.current);
                       if (fileInputRef.current) {
                         fileInputRef.current.value = ''; // Reset input to allow selecting same file
                         fileInputRef.current.click();
-                        console.log('File input clicked');
                       } else {
                         console.error('fileInputRef.current is null');
                         toast.error('File input not ready. Please try again.');

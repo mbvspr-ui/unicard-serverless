@@ -19,7 +19,6 @@ export const initPWA = () => {
   // Listen for app installed event
   window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
-    console.log('PWA installed successfully');
   });
 };
 
@@ -59,7 +58,6 @@ export const isPWASupported = (): boolean => {
 // Register service worker
 export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
   if (!('serviceWorker' in navigator)) {
-    console.log('Service Worker not supported');
     return null;
   }
 
@@ -67,7 +65,6 @@ export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/',
     });
-    console.log('Service Worker registered:', registration);
     return registration;
   } catch (error) {
     console.error('Service Worker registration failed:', error);
@@ -84,7 +81,6 @@ export const unregisterServiceWorker = async (): Promise<boolean> => {
   try {
     const registration = await navigator.serviceWorker.ready;
     const success = await registration.unregister();
-    console.log('Service Worker unregistered:', success);
     return success;
   } catch (error) {
     console.error('Service Worker unregistration failed:', error);
@@ -101,7 +97,6 @@ export const checkForUpdates = async (): Promise<void> => {
   try {
     const registration = await navigator.serviceWorker.ready;
     await registration.update();
-    console.log('Checked for Service Worker updates');
   } catch (error) {
     console.error('Failed to check for updates:', error);
   }

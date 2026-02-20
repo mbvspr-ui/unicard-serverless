@@ -352,11 +352,8 @@ export async function compressImageIfNeeded(
 ): Promise<Blob> {
   // If already under max size, return as-is
   if (blob.size <= targetMaxSize) {
-    console.log(`Image size ${(blob.size / 1024).toFixed(2)}KB - no compression needed`);
     return blob;
   }
-
-  console.log(`Image size ${(blob.size / 1024).toFixed(2)}KB - compressing...`);
 
   // Load image from blob
   const img = await loadImage(URL.createObjectURL(blob));
@@ -382,12 +379,9 @@ export async function compressImageIfNeeded(
     const quality = (minQuality + maxQuality) / 2;
     const testBlob = await canvasToBlob(canvas, 'image/jpeg', quality);
     
-    console.log(`Attempt ${attempts + 1}: quality=${quality.toFixed(2)}, size=${(testBlob.size / 1024).toFixed(2)}KB`);
-    
     if (testBlob.size <= targetMaxSize && testBlob.size >= targetMinSize) {
       // Perfect! Within target range
       bestBlob = testBlob;
-      console.log(`✓ Found optimal compression: ${(testBlob.size / 1024).toFixed(2)}KB`);
       break;
     } else if (testBlob.size > targetMaxSize) {
       // Too large, reduce quality
@@ -406,8 +400,6 @@ export async function compressImageIfNeeded(
     // One more attempt with lower quality
     bestBlob = await canvasToBlob(canvas, 'image/jpeg', minQuality);
   }
-
-  console.log(`Final compressed size: ${(bestBlob.size / 1024).toFixed(2)}KB (${((1 - bestBlob.size / blob.size) * 100).toFixed(1)}% reduction)`);
   
   return bestBlob;
 }

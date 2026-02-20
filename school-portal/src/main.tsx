@@ -10,7 +10,7 @@ initPWA();
 // Register service worker
 registerServiceWorker().then((registration) => {
   if (registration) {
-    console.log('Service Worker registered successfully');
+    // Service worker registered
   }
 });
 

@@ -362,9 +362,6 @@ export default function EditStudent() {
           const photoResponse = await studentApi.uploadPhoto(studentId, photoFile);
           if (!photoResponse.success) {
             toast.warning('Student updated but photo upload failed. You can update it later.');
-          } else {
-            // Photo uploaded successfully - force reload to show new photo
-            console.log('Photo uploaded successfully');
           }
         } catch (photoError) {
           console.error('Photo upload error:', photoError);
