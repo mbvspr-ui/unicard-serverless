@@ -1,6 +1,6 @@
 // Version management for cache busting
 // Update this version number whenever you deploy changes
-export const APP_VERSION = '1.1.4';
+export const APP_VERSION = '1.1.5';
 export const VERSION_KEY = 'app_version';
 
 export const checkVersion = (): boolean => {
@@ -11,6 +11,38 @@ export const checkVersion = (): boolean => {
   }
   
   return true; // Version matches
+};
+
+// Check remote version from server
+export const checkRemoteVersion = async (): Promise<boolean> => {
+  try {
+    const response = await fetch('/version.json?t=' + Date.now(), {
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
+    
+    if (!response.ok) {
+      return true; // If can't fetch, assume no update needed
+    }
+    
+    const data = await response.json();
+    const remoteVersion = data.version;
+    
+    // Compare with stored version
+    const storedVersion = localStorage.getItem(VERSION_KEY);
+    
+    if (storedVersion && storedVersion !== remoteVersion) {
+      return false; // Version mismatch - update needed
+    }
+    
+    return true; // Versions match
+  } catch (error) {
+    // If fetch fails, fall back to local check
+    return checkVersion();
+  }
 };
 
 export const updateVersion = (): void => {

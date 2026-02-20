@@ -2,18 +2,58 @@ import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { RefreshCw, X } from 'lucide-react';
-import { checkVersion, clearAppCache, updateVersion, APP_VERSION } from '@/utils/version';
+import { checkVersion, checkRemoteVersion, clearAppCache, updateVersion, APP_VERSION } from '@/utils/version';
+
+const CHECK_INTERVAL = 30000; // Check every 30 seconds
 
 export default function UpdateNotification() {
   const [showUpdate, setShowUpdate] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
-    // Check version on mount
-    const versionMatch = checkVersion();
-    if (!versionMatch) {
+  const checkForUpdate = async () => {
+    // First check local version
+    const localMatch = checkVersion();
+    if (!localMatch) {
+      setShowUpdate(true);
+      return;
+    }
+
+    // Then check remote version
+    const remoteMatch = await checkRemoteVersion();
+    if (!remoteMatch) {
       setShowUpdate(true);
     }
+  };
+
+  useEffect(() => {
+    // Check version on mount
+    checkForUpdate();
+
+    // Set up periodic checking (every 30 seconds)
+    const intervalId = setInterval(() => {
+      checkForUpdate();
+    }, CHECK_INTERVAL);
+
+    // Check when user returns to the tab
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkForUpdate();
+      }
+    };
+
+    // Check when window regains focus
+    const handleFocus = () => {
+      checkForUpdate();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const handleUpdate = async () => {
