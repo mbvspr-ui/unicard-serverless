@@ -35,7 +35,7 @@ export default function AddStaff() {
     father_spouse_name: '',
     date_of_birth: '',
     gender: undefined,
-    phone_number: '+91',
+    phone_number: '',
     blood_group: '',
     employee_id: '',
     staff_type: 'Teaching',
@@ -49,7 +49,7 @@ export default function AddStaff() {
     city: '',
     pincode: '',
     emergency_contact_name: '',
-    emergency_contact_number: '+91',
+    emergency_contact_number: '',
     emergency_contact_relationship: '',
   });
 
@@ -142,9 +142,10 @@ export default function AddStaff() {
     if (!formData.pincode.trim()) newErrors.pincode = 'Pincode is required';
     else if (!/^\d{6}$/.test(formData.pincode)) newErrors.pincode = 'Pincode must be 6 digits';
 
-    if (formData.phone_number && formData.phone_number !== '+91') {
-      if (!/^\+91[6-9]\d{9}$/.test(formData.phone_number)) {
-        newErrors.phone_number = 'Invalid phone number format';
+    // Phone number validation (if provided) - optional field
+    if (formData.phone_number && formData.phone_number.trim()) {
+      if (!/^[0-9]{10,15}$/.test(formData.phone_number.replace(/[\s\-\+]/g, ''))) {
+        newErrors.phone_number = 'Phone number must be 10-15 digits';
       }
     }
 
@@ -174,8 +175,8 @@ export default function AddStaff() {
       // First, create the staff member without photo
       const staffData: StaffInput = {
         ...formData,
-        phone_number: formData.phone_number === '+91' ? undefined : formData.phone_number,
-        emergency_contact_number: formData.emergency_contact_number === '+91' ? undefined : formData.emergency_contact_number,
+        phone_number: formData.phone_number?.trim() || undefined,
+        emergency_contact_number: formData.emergency_contact_number?.trim() || undefined,
       };
 
       const response = await staffApi.create(staffData);
@@ -277,7 +278,7 @@ export default function AddStaff() {
                   value={formData.phone_number}
                   onChange={(e) => handleInputChange('phone_number', e.target.value)}
                   error={errors.phone_number}
-                  placeholder="+919876543210"
+                  placeholder="Enter phone number"
                 />
                 <FormSelect
                   label="Blood Group"
@@ -396,7 +397,7 @@ export default function AddStaff() {
                   label="Contact Number"
                   value={formData.emergency_contact_number}
                   onChange={(e) => handleInputChange('emergency_contact_number', e.target.value)}
-                  placeholder="+919876543210"
+                  placeholder="Enter emergency contact number"
                 />
                 <FormInput
                   label="Relationship"

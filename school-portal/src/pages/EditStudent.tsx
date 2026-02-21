@@ -64,7 +64,7 @@ export default function EditStudent() {
     student_id: '',
     date_of_birth: '',
     gender: '',
-    phone_number: '+91',
+    phone_number: '',
     blood_group: '',
     address: '',
     state: '',
@@ -111,7 +111,7 @@ export default function EditStudent() {
             student_id: student.student_id || '',
             date_of_birth: formatDateForInput(student.date_of_birth),
             gender: student.gender || '',
-            phone_number: student.phone_number || '+91',
+            phone_number: student.phone_number || '',
             blood_group: student.blood_group || '',
             address: student.address || '',
             state: student.state,
@@ -327,7 +327,7 @@ export default function EditStudent() {
       });
       
       // Clean up phone number
-      if (updates.phone_number === '+91') {
+      if (!updates.phone_number || !updates.phone_number.trim()) {
         updates.phone_number = undefined;
       }
 
@@ -570,7 +570,7 @@ export default function EditStudent() {
                         onChange={(e) => handleInputChange('phone_number', e.target.value)}
                         error={errors.phone_number}
                         disabled={!selectedFields.has('phone_number')}
-                        placeholder="+91XXXXXXXXXX"
+                        placeholder="Enter phone number"
                         inputMode="numeric"
                       />
                     </div>

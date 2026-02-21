@@ -59,7 +59,7 @@ export default function AddStudent() {
     student_id: '',
     date_of_birth: '',
     gender: '',
-    phone_number: '+91',
+    phone_number: '',
     blood_group: '',
     address: '',
     state: '',
@@ -185,10 +185,10 @@ export default function AddStudent() {
       newErrors.pincode = 'Pincode must be exactly 6 digits';
     }
 
-    // Phone number validation (if provided)
-    if (formData.phone_number && formData.phone_number !== '+91') {
-      if (!/^\+91[6-9][0-9]{9}$/.test(formData.phone_number)) {
-        newErrors.phone_number = 'Phone number must be in format +91XXXXXXXXXX';
+    // Phone number validation (if provided) - optional field
+    if (formData.phone_number && formData.phone_number.trim()) {
+      if (!/^[0-9]{10,15}$/.test(formData.phone_number.replace(/[\s\-\+]/g, ''))) {
+        newErrors.phone_number = 'Phone number must be 10-15 digits';
       }
     }
 
@@ -216,10 +216,10 @@ export default function AddStudent() {
     setLoading(true);
 
     try {
-      // Clean up phone number if it's just +91
+      // Clean up phone number if empty
       const dataToSubmit = {
         ...formData,
-        phone_number: formData.phone_number === '+91' ? undefined : formData.phone_number,
+        phone_number: formData.phone_number?.trim() || undefined,
       };
 
       // Create student first
@@ -353,7 +353,7 @@ export default function AddStudent() {
                     value={formData.phone_number || ''}
                     onChange={(e) => handleInputChange('phone_number', e.target.value)}
                     error={errors.phone_number}
-                    placeholder="+91XXXXXXXXXX"
+                    placeholder="Enter phone number"
                     inputMode="numeric"
                   />
 
@@ -626,7 +626,7 @@ export default function AddStudent() {
                     <p className="font-medium">{formData.blood_group}</p>
                   </div>
                 )}
-                {formData.phone_number && formData.phone_number !== '+91' && (
+                {formData.phone_number && formData.phone_number.trim() && (
                   <div>
                     <p className="text-gray-500">Phone Number</p>
                     <p className="font-medium">{formData.phone_number}</p>
