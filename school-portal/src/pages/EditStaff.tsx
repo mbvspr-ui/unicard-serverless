@@ -53,7 +53,7 @@ export default function EditStaff() {
     father_spouse_name: '',
     date_of_birth: '',
     gender: undefined,
-    phone_number: '',
+    phone_number: '+91',
     blood_group: '',
     employee_id: '',
     staff_type: 'Teaching',
@@ -67,7 +67,7 @@ export default function EditStaff() {
     city: '',
     pincode: '',
     emergency_contact_name: '',
-    emergency_contact_number: '',
+    emergency_contact_number: '+91',
     emergency_contact_relationship: '',
   });
 
@@ -104,7 +104,7 @@ export default function EditStaff() {
             father_spouse_name: staff.father_spouse_name || '',
             date_of_birth: formatDateForInput(staff.date_of_birth),
             gender: staff.gender,
-            phone_number: staff.phone_number || '',
+            phone_number: staff.phone_number || '+91',
             blood_group: staff.blood_group || '',
             employee_id: staff.employee_id || '',
             staff_type: staff.staff_type,
@@ -118,7 +118,7 @@ export default function EditStaff() {
             city: staff.city,
             pincode: staff.pincode,
             emergency_contact_name: staff.emergency_contact_name || '',
-            emergency_contact_number: staff.emergency_contact_number || '',
+            emergency_contact_number: staff.emergency_contact_number || '+91',
             emergency_contact_relationship: staff.emergency_contact_relationship || '',
           });
           
@@ -127,7 +127,7 @@ export default function EditStaff() {
             father_spouse_name: staff.father_spouse_name || '',
             date_of_birth: formatDateForInput(staff.date_of_birth),
             gender: staff.gender,
-            phone_number: staff.phone_number || '',
+            phone_number: staff.phone_number || '+91',
             blood_group: staff.blood_group || '',
             employee_id: staff.employee_id || '',
             staff_type: staff.staff_type,
@@ -141,7 +141,7 @@ export default function EditStaff() {
             city: staff.city,
             pincode: staff.pincode,
             emergency_contact_name: staff.emergency_contact_name || '',
-            emergency_contact_number: staff.emergency_contact_number || '',
+            emergency_contact_number: staff.emergency_contact_number || '+91',
             emergency_contact_relationship: staff.emergency_contact_relationship || '',
           });
           
@@ -200,6 +200,22 @@ export default function EditStaff() {
   }, [formData.state]);
 
   const handleInputChange = (field: keyof StaffInput, value: string) => {
+    // Special handling for phone numbers to keep +91 prefix
+    if (field === 'phone_number' || field === 'emergency_contact_number') {
+      // Always ensure +91 prefix
+      if (!value.startsWith('+91')) {
+        value = '+91';
+      }
+      // Limit to +91 + 10 digits
+      if (value.length > 13) {
+        value = value.substring(0, 13);
+      }
+      // Only allow digits after +91
+      const prefix = '+91';
+      const digits = value.substring(3).replace(/\D/g, '');
+      value = prefix + digits;
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => {
@@ -308,7 +324,7 @@ export default function EditStaff() {
       if (!value || (typeof value === 'string' && value.trim() === '')) {
         newErrors[field] = `${label} is required`;
       } else if (field === 'phone_number' && typeof value === 'string') {
-        if (value.length < 10) {
+        if (value !== '+91' && value.length < 10) {
           newErrors[field] = 'Phone number must be at least 10 digits';
         }
       } else if (field === 'pincode' && typeof value === 'string') {
@@ -344,10 +360,10 @@ export default function EditStaff() {
       });
       
       // Clean up phone numbers
-      if (!updates.phone_number || !updates.phone_number.trim()) {
+      if (updates.phone_number === '+91') {
         updates.phone_number = undefined;
       }
-      if (!updates.emergency_contact_number || !updates.emergency_contact_number.trim()) {
+      if (updates.emergency_contact_number === '+91') {
         updates.emergency_contact_number = undefined;
       }
 
@@ -415,10 +431,10 @@ export default function EditStaff() {
     if (!formData.pincode.trim()) newErrors.pincode = 'Pincode is required';
     else if (!/^\d{6}$/.test(formData.pincode)) newErrors.pincode = 'Pincode must be 6 digits';
 
-    // Phone number validation (if provided) - optional field
-    if (formData.phone_number && formData.phone_number.trim()) {
-      if (!/^[0-9]{10,15}$/.test(formData.phone_number.replace(/[\s\-\+]/g, ''))) {
-        newErrors.phone_number = 'Phone number must be 10-15 digits';
+    // Phone number validation (if provided)
+    if (formData.phone_number && formData.phone_number !== '+91') {
+      if (!/^\+91[0-9]{10}$/.test(formData.phone_number)) {
+        newErrors.phone_number = 'Phone number must be +91 followed by 10 digits';
       }
     }
 
@@ -450,8 +466,8 @@ export default function EditStaff() {
     try {
       const updates: StaffInput = {
         ...formData,
-        phone_number: formData.phone_number?.trim() || undefined,
-        emergency_contact_number: formData.emergency_contact_number?.trim() || undefined,
+        phone_number: formData.phone_number === '+91' ? undefined : formData.phone_number,
+        emergency_contact_number: formData.emergency_contact_number === '+91' ? undefined : formData.emergency_contact_number,
       };
 
       const response = await staffApi.update(staffId, updates);
@@ -713,7 +729,7 @@ export default function EditStaff() {
                         onChange={(e) => handleInputChange('phone_number', e.target.value)}
                         error={errors.phone_number}
                         disabled={!selectedFields.has('phone_number')}
-                        placeholder="Enter phone number"
+                        placeholder="+91XXXXXXXXXX"
                       />
                     </div>
                   </div>
@@ -1035,7 +1051,7 @@ export default function EditStaff() {
                         value={formData.emergency_contact_number}
                         onChange={(e) => handleInputChange('emergency_contact_number', e.target.value)}
                         disabled={!selectedFields.has('emergency_contact_number')}
-                        placeholder="Enter emergency contact number"
+                        placeholder="+91XXXXXXXXXX"
                       />
                     </div>
                   </div>

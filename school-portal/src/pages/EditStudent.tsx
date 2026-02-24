@@ -64,7 +64,7 @@ export default function EditStudent() {
     student_id: '',
     date_of_birth: '',
     gender: '',
-    phone_number: '',
+    phone_number: '+91',
     blood_group: '',
     address: '',
     state: '',
@@ -111,7 +111,7 @@ export default function EditStudent() {
             student_id: student.student_id || '',
             date_of_birth: formatDateForInput(student.date_of_birth),
             gender: student.gender || '',
-            phone_number: student.phone_number || '',
+            phone_number: student.phone_number || '+91',
             blood_group: student.blood_group || '',
             address: student.address || '',
             state: student.state,
@@ -178,6 +178,22 @@ export default function EditStudent() {
   }, [formData.state]);
 
   const handleInputChange = (field: keyof StudentInput, value: string) => {
+    // Special handling for phone number to keep +91 prefix
+    if (field === 'phone_number') {
+      // Always ensure +91 prefix
+      if (!value.startsWith('+91')) {
+        value = '+91';
+      }
+      // Limit to +91 + 10 digits
+      if (value.length > 13) {
+        value = value.substring(0, 13);
+      }
+      // Only allow digits after +91
+      const prefix = '+91';
+      const digits = value.substring(3).replace(/\D/g, '');
+      value = prefix + digits;
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => {
@@ -327,7 +343,7 @@ export default function EditStudent() {
       });
       
       // Clean up phone number
-      if (!updates.phone_number || !updates.phone_number.trim()) {
+      if (updates.phone_number === '+91') {
         updates.phone_number = undefined;
       }
 
@@ -570,7 +586,7 @@ export default function EditStudent() {
                         onChange={(e) => handleInputChange('phone_number', e.target.value)}
                         error={errors.phone_number}
                         disabled={!selectedFields.has('phone_number')}
-                        placeholder="Enter phone number"
+                        placeholder="+91XXXXXXXXXX"
                         inputMode="numeric"
                       />
                     </div>

@@ -59,7 +59,7 @@ export default function AddStudent() {
     student_id: '',
     date_of_birth: '',
     gender: '',
-    phone_number: '',
+    phone_number: '+91',
     blood_group: '',
     address: '',
     state: '',
@@ -107,6 +107,22 @@ export default function AddStudent() {
     field: keyof StudentInput,
     value: string
   ) => {
+    // Special handling for phone number to keep +91 prefix
+    if (field === 'phone_number') {
+      // Always ensure +91 prefix
+      if (!value.startsWith('+91')) {
+        value = '+91';
+      }
+      // Limit to +91 + 10 digits
+      if (value.length > 13) {
+        value = value.substring(0, 13);
+      }
+      // Only allow digits after +91
+      const prefix = '+91';
+      const digits = value.substring(3).replace(/\D/g, '');
+      value = prefix + digits;
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error for this field
     if (errors[field]) {
@@ -185,10 +201,10 @@ export default function AddStudent() {
       newErrors.pincode = 'Pincode must be exactly 6 digits';
     }
 
-    // Phone number validation (if provided) - optional field
-    if (formData.phone_number && formData.phone_number.trim()) {
-      if (!/^[0-9]{10,15}$/.test(formData.phone_number.replace(/[\s\-\+]/g, ''))) {
-        newErrors.phone_number = 'Phone number must be 10-15 digits';
+    // Phone number validation (if provided)
+    if (formData.phone_number && formData.phone_number !== '+91') {
+      if (!/^\+91[0-9]{10}$/.test(formData.phone_number)) {
+        newErrors.phone_number = 'Phone number must be +91 followed by 10 digits';
       }
     }
 
@@ -216,10 +232,10 @@ export default function AddStudent() {
     setLoading(true);
 
     try {
-      // Clean up phone number if empty
+      // Clean up phone number if it's just +91
       const dataToSubmit = {
         ...formData,
-        phone_number: formData.phone_number?.trim() || undefined,
+        phone_number: formData.phone_number === '+91' ? undefined : formData.phone_number,
       };
 
       // Create student first
@@ -353,7 +369,7 @@ export default function AddStudent() {
                     value={formData.phone_number || ''}
                     onChange={(e) => handleInputChange('phone_number', e.target.value)}
                     error={errors.phone_number}
-                    placeholder="Enter phone number"
+                    placeholder="+91XXXXXXXXXX"
                     inputMode="numeric"
                   />
 
@@ -626,7 +642,7 @@ export default function AddStudent() {
                     <p className="font-medium">{formData.blood_group}</p>
                   </div>
                 )}
-                {formData.phone_number && formData.phone_number.trim() && (
+                {formData.phone_number && formData.phone_number !== '+91' && (
                   <div>
                     <p className="text-gray-500">Phone Number</p>
                     <p className="font-medium">{formData.phone_number}</p>
