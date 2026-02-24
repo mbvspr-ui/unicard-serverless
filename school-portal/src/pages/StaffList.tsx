@@ -32,7 +32,6 @@ export default function StaffList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalStaff, setTotalStaff] = useState(0);
-  const [showFilters, setShowFilters] = useState(false);
   const [departments, setDepartments] = useState<string[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
@@ -199,42 +198,42 @@ export default function StaffList() {
           />
         </div>
 
-        {/* Filter Toggle Button (Mobile) */}
-        <div className="md:hidden">
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className="w-full"
-          >
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
-        </div>
-
-        {/* Filters */}
-        <div className={`${showFilters ? 'block' : 'hidden'} md:block mt-4 md:mt-0`}>
+        {/* Filters - Always visible on mobile */}
+        <div className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormSelect
-              placeholder="All Staff Types"
-              value={staffTypeFilter || undefined}
+              label="Staff Type"
+              placeholder="Select Staff Type"
+              value={staffTypeFilter || ''}
               onValueChange={handleStaffTypeFilter}
-              options={STAFF_TYPES.map(t => ({ value: t, label: t }))}
+              options={[
+                { value: '', label: 'All Staff Types' },
+                ...STAFF_TYPES.map(t => ({ value: t, label: t }))
+              ]}
             />
             <FormSelect
-              placeholder="All Departments"
-              value={departmentFilter || undefined}
+              label="Department"
+              placeholder="Select Department"
+              value={departmentFilter || ''}
               onValueChange={handleDepartmentFilter}
-              options={departments.map(d => ({ value: d, label: d }))}
+              options={[
+                { value: '', label: 'All Departments' },
+                ...departments.map(d => ({ value: d, label: d }))
+              ]}
             />
             {(staffTypeFilter || departmentFilter) && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setStaffTypeFilter('');
-                  setDepartmentFilter('');
-                }}
-              >
-                Clear Filters
-              </Button>
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setStaffTypeFilter('');
+                    setDepartmentFilter('');
+                  }}
+                  className="w-full"
+                >
+                  Clear Filters
+                </Button>
+              </div>
             )}
           </div>
         </div>

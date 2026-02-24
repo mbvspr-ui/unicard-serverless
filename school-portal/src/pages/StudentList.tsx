@@ -225,42 +225,42 @@ export default function StudentList() {
           />
         </div>
 
-        {/* Filter Toggle Button (Mobile) */}
-        <div className="md:hidden">
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className="w-full"
-          >
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
-        </div>
-
-        {/* Filters */}
-        <div className={`${showFilters ? 'block' : 'hidden'} md:block mt-4 md:mt-0`}>
+        {/* Filters - Always visible on mobile */}
+        <div className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormSelect
-              placeholder="All Classes"
-              value={classFilter || undefined}
+              label="Class"
+              placeholder="Select Class"
+              value={classFilter || ''}
               onValueChange={handleClassFilter}
-              options={CLASSES.map(c => ({ value: c, label: c }))}
+              options={[
+                { value: '', label: 'All Classes' },
+                ...CLASSES.map(c => ({ value: c, label: c }))
+              ]}
             />
             <FormSelect
-              placeholder="All Sections"
-              value={sectionFilter || undefined}
+              label="Section"
+              placeholder="Select Section"
+              value={sectionFilter || ''}
               onValueChange={handleSectionFilter}
-              options={SECTIONS.map(s => ({ value: s, label: s }))}
+              options={[
+                { value: '', label: 'All Sections' },
+                ...SECTIONS.map(s => ({ value: s, label: s }))
+              ]}
             />
             {(classFilter || sectionFilter) && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setClassFilter('');
-                  setSectionFilter('');
-                }}
-              >
-                Clear Filters
-              </Button>
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setClassFilter('');
+                    setSectionFilter('');
+                  }}
+                  className="w-full"
+                >
+                  Clear Filters
+                </Button>
+              </div>
             )}
           </div>
         </div>
