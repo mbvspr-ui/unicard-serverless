@@ -109,12 +109,12 @@ export default function StaffList() {
 
   // Handle filter changes
   const handleStaffTypeFilter = (value: string) => {
-    setStaffTypeFilter(value);
+    setStaffTypeFilter(value === 'all' ? '' : value);
     setCurrentPage(1);
   };
 
   const handleDepartmentFilter = (value: string) => {
-    setDepartmentFilter(value);
+    setDepartmentFilter(value === 'all' ? '' : value);
     setCurrentPage(1);
   };
 
@@ -204,20 +204,20 @@ export default function StaffList() {
             <FormSelect
               label="Staff Type"
               placeholder="Select Staff Type"
-              value={staffTypeFilter || ''}
+              value={staffTypeFilter || 'all'}
               onValueChange={handleStaffTypeFilter}
               options={[
-                { value: '', label: 'All Staff Types' },
+                { value: 'all', label: 'All Staff Types' },
                 ...STAFF_TYPES.map(t => ({ value: t, label: t }))
               ]}
             />
             <FormSelect
               label="Department"
               placeholder="Select Department"
-              value={departmentFilter || ''}
+              value={departmentFilter || 'all'}
               onValueChange={handleDepartmentFilter}
               options={[
-                { value: '', label: 'All Departments' },
+                { value: 'all', label: 'All Departments' },
                 ...departments.map(d => ({ value: d, label: d }))
               ]}
             />

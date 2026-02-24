@@ -114,12 +114,12 @@ export default function StudentList() {
 
   // Handle filter changes
   const handleClassFilter = (value: string) => {
-    setClassFilter(value);
+    setClassFilter(value === 'all' ? '' : value);
     setCurrentPage(1);
   };
 
   const handleSectionFilter = (value: string) => {
-    setSectionFilter(value);
+    setSectionFilter(value === 'all' ? '' : value);
     setCurrentPage(1);
   };
 
@@ -231,20 +231,20 @@ export default function StudentList() {
             <FormSelect
               label="Class"
               placeholder="Select Class"
-              value={classFilter || ''}
+              value={classFilter || 'all'}
               onValueChange={handleClassFilter}
               options={[
-                { value: '', label: 'All Classes' },
+                { value: 'all', label: 'All Classes' },
                 ...CLASSES.map(c => ({ value: c, label: c }))
               ]}
             />
             <FormSelect
               label="Section"
               placeholder="Select Section"
-              value={sectionFilter || ''}
+              value={sectionFilter || 'all'}
               onValueChange={handleSectionFilter}
               options={[
-                { value: '', label: 'All Sections' },
+                { value: 'all', label: 'All Sections' },
                 ...SECTIONS.map(s => ({ value: s, label: s }))
               ]}
             />
