@@ -173,6 +173,19 @@ export default function AddStudent() {
     toast.success('Photo removed');
   };
 
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return 'N/A';
+    }
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -623,7 +636,7 @@ export default function AddStudent() {
                 {formData.date_of_birth && (
                   <div>
                     <p className="text-gray-500">Date of Birth</p>
-                    <p className="font-medium">{formData.date_of_birth}</p>
+                    <p className="font-medium">{formatDate(formData.date_of_birth)}</p>
                   </div>
                 )}
                 {formData.gender && (

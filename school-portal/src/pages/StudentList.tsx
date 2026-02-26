@@ -144,6 +144,20 @@ export default function StudentList() {
     }
   };
 
+  // Format date for display
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return 'N/A';
+    }
+  };
+
   // Handle show details
   const handleShowDetails = (student: Student) => {
     setSelectedStudent(student);
@@ -618,7 +632,7 @@ export default function StudentList() {
                   {selectedStudent.date_of_birth && (
                     <div>
                       <p className="text-gray-500">Date of Birth</p>
-                      <p className="font-medium">{selectedStudent.date_of_birth}</p>
+                      <p className="font-medium">{formatDate(selectedStudent.date_of_birth)}</p>
                     </div>
                   )}
                   {selectedStudent.gender && (
