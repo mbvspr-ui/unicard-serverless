@@ -11,7 +11,7 @@ interface Student {
   id: string;
   name: string;
   father_name: string;
-  mother_name: string;
+  mother_name: string | null;
   class: string;
   section: string;
   roll_number: string;

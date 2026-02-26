@@ -50,7 +50,7 @@ export interface Student {
   school_id: string;
   name: string;
   father_name: string | null;
-  mother_name: string;
+  mother_name: string | null;
   class: string;
   section: string | null;
   roll_number: string | null;

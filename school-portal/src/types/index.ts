@@ -21,7 +21,7 @@ export interface Student {
   school_id: string;
   name: string;
   father_name: string | null;
-  mother_name: string;
+  mother_name: string | null;
   class: string;
   section: string | null;
   roll_number: string | null;
@@ -43,7 +43,7 @@ export interface Student {
 export interface StudentInput {
   name: string;
   father_name?: string;
-  mother_name: string;
+  mother_name?: string;
   class: string;
   section?: string;
   roll_number?: string;

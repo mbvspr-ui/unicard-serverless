@@ -180,9 +180,6 @@ export default function AddStudent() {
     if (!formData.name.trim()) {
       newErrors.name = 'Student name is required';
     }
-    if (!formData.mother_name.trim()) {
-      newErrors.mother_name = 'Mother name is required';
-    }
     if (!formData.class) {
       newErrors.class = 'Class is required';
     }
@@ -334,7 +331,6 @@ export default function AddStudent() {
                   <FormInput
                     id="mother_name"
                     label="Mother's Name"
-                    required
                     value={formData.mother_name}
                     onChange={(e) => handleInputChange('mother_name', e.target.value)}
                     error={errors.mother_name}

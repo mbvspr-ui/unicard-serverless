@@ -499,7 +499,6 @@ export default function EditStudent() {
                       <FormInput
                         id="mother_name"
                         label="Mother's Name"
-                        required
                         value={formData.mother_name}
                         onChange={(e) => handleInputChange('mother_name', e.target.value)}
                         error={errors.mother_name}

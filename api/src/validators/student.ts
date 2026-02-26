@@ -10,7 +10,7 @@ const pincodeRegex = /^[0-9]{6}$/;
 export const studentSchema = z.object({
   name: z.string().min(1, 'Student name is required'),
   father_name: z.string().optional(),
-  mother_name: z.string().min(1, 'Mother name is required'),
+  mother_name: z.string().optional(),
   class: z.string().min(1, 'Class is required'),
   section: z.string().optional(),
   roll_number: z.string().optional(),
