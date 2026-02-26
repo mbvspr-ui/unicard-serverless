@@ -1,13 +1,24 @@
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
-require('dotenv').config();
+import pg from 'pg';
+import dotenv from 'dotenv';
+import fs from 'fs';
+
+dotenv.config();
+
+const { Pool } = pg;
+
+// Set environment variable to allow self-signed certificates
+if (process.env.DATABASE_URL?.includes('sslmode=require')) {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('localhost') ? false : {
-    rejectUnauthorized: false
-  }
+  ssl: process.env.DATABASE_URL?.includes('sslmode=require')
+    ? { 
+        rejectUnauthorized: false,
+        ca: fs.readFileSync('./ca-certificate.crt', 'utf8')
+      }
+    : false
 });
 
 async function runMigration() {
@@ -17,7 +28,7 @@ async function runMigration() {
     console.log('Starting migration 012: Make mother_name optional...');
     
     const migrationSQL = fs.readFileSync(
-      path.join(__dirname, 'migrations', '012_make_mother_name_optional.sql'),
+      './migrations/012_make_mother_name_optional.sql',
       'utf8'
     );
     
