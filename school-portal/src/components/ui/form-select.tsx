@@ -28,7 +28,7 @@ const FormSelect = React.forwardRef<HTMLButtonElement, FormSelectProps>(
             {required && <span className="text-destructive ml-1">*</span>}
           </Label>
         )}
-        <Select value={value} onValueChange={onValueChange} disabled={disabled}>
+        <Select value={value || ''} onValueChange={onValueChange} disabled={disabled}>
           <SelectTrigger
             ref={ref}
             id={selectId}

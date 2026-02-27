@@ -54,7 +54,7 @@ export default function EditStaff() {
     date_of_birth: '',
     gender: undefined,
     phone_number: '+91',
-    blood_group: '',
+    blood_group: undefined,
     employee_id: '',
     staff_type: 'Teaching',
     designation: '',

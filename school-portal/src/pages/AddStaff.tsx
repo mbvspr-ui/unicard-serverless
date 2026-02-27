@@ -36,7 +36,7 @@ export default function AddStaff() {
     date_of_birth: '',
     gender: undefined,
     phone_number: '+91',
-    blood_group: '',
+    blood_group: undefined,
     employee_id: '',
     staff_type: 'Teaching',
     designation: '',
@@ -193,11 +193,28 @@ export default function AddStaff() {
         ...formData,
         phone_number: formData.phone_number === '+91' ? undefined : formData.phone_number,
         emergency_contact_number: formData.emergency_contact_number === '+91' ? undefined : formData.emergency_contact_number,
+        blood_group: formData.blood_group || undefined,
+        employee_id: formData.employee_id || undefined,
+        department: formData.department || undefined,
+        date_of_birth: formData.date_of_birth || undefined,
+        date_of_joining: formData.date_of_joining || undefined,
+        qualification: formData.qualification || undefined,
+        address: formData.address || undefined,
+        father_spouse_name: formData.father_spouse_name || undefined,
+        emergency_contact_name: formData.emergency_contact_name || undefined,
+        emergency_contact_relationship: formData.emergency_contact_relationship || undefined,
       };
 
       const response = await staffApi.create(staffData);
 
       if (!response.success || !response.data) {
+        // Show detailed validation errors if available
+        if (response.error?.details) {
+          const errorMessages = response.error.details.map((err: any) => 
+            `${err.path.join('.')}: ${err.message}`
+          ).join(', ');
+          throw new Error(errorMessages);
+        }
         throw new Error(response.error?.message || 'Failed to create staff member');
       }
 
