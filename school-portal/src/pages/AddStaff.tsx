@@ -233,7 +233,7 @@ export default function AddStaff() {
           <Card className="p-6">
             {/* Photo Section */}
             <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4">Photo *</h3>
+              <h3 className="text-lg font-semibold mb-4">Photo</h3>
               <div className="flex flex-col items-center gap-4">
                 {photoPreview ? (
                   <img
