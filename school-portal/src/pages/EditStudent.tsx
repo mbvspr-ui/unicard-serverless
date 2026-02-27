@@ -23,7 +23,7 @@ import { PlusCircle, Edit2, Trash2 } from 'lucide-react';
 import { addCacheBuster, clearPhotoCache } from '../utils/photo';
 
 const CLASSES = [
-  'Nursery', 'LKG', 'UKG',
+  'Nursery', 'KG', 'LKG', 'UKG',
   'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
   'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
   'Class 11', 'Class 12'
