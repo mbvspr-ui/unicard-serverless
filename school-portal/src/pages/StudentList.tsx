@@ -22,7 +22,7 @@ import { addCacheBuster } from '../utils/photo';
 import { Eye, RefreshCw } from 'lucide-react';
 
 const CLASSES = [
-  'Nursery', 'KG', 'LKG', 'UKG',
+  'Nursery', 'KG', 'KG1', 'KG2', 'LKG', 'UKG',
   'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
   'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
   'Class 11', 'Class 12'
@@ -148,11 +148,11 @@ export default function StudentList() {
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'N/A';
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      const date = new Date(dateString);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
     } catch {
       return 'N/A';
     }

@@ -171,6 +171,32 @@ export default function AddStaff() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Convert DD/MM/YYYY to ISO format (YYYY-MM-DD)
+  const convertDateToISO = (dateStr: string): string | undefined => {
+    if (!dateStr || dateStr.trim() === '') return undefined;
+    
+    // Check if already in ISO format (YYYY-MM-DD)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    
+    // Parse DD/MM/YYYY format
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2];
+      
+      // Validate date
+      const date = new Date(`${year}-${month}-${day}`);
+      if (!isNaN(date.getTime())) {
+        return `${year}-${month}-${day}`;
+      }
+    }
+    
+    return undefined;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -188,6 +214,10 @@ export default function AddStaff() {
     setLoading(true);
 
     try {
+      // Convert dates from DD/MM/YYYY to ISO format
+      const convertedDOB = formData.date_of_birth ? convertDateToISO(formData.date_of_birth) : undefined;
+      const convertedDOJ = formData.date_of_joining ? convertDateToISO(formData.date_of_joining) : undefined;
+      
       // First, create the staff member without photo
       const staffData: StaffInput = {
         ...formData,
@@ -196,8 +226,8 @@ export default function AddStaff() {
         blood_group: formData.blood_group || undefined,
         employee_id: formData.employee_id || undefined,
         department: formData.department || undefined,
-        date_of_birth: formData.date_of_birth || undefined,
-        date_of_joining: formData.date_of_joining || undefined,
+        date_of_birth: convertedDOB,
+        date_of_joining: convertedDOJ,
         qualification: formData.qualification || undefined,
         address: formData.address || undefined,
         father_spouse_name: formData.father_spouse_name || undefined,
@@ -294,10 +324,12 @@ export default function AddStaff() {
                   placeholder="Enter father's or spouse name"
                 />
                 <FormInput
-                  label="Date of Birth"
-                  type="date"
+                  label="Date of Birth (DD/MM/YYYY)"
+                  type="text"
                   value={formData.date_of_birth}
                   onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                  placeholder="DD/MM/YYYY"
+                  maxLength={10}
                 />
                 <FormSelect
                   label="Gender"
@@ -354,10 +386,12 @@ export default function AddStaff() {
                   placeholder="e.g., Mathematics"
                 />
                 <FormInput
-                  label="Date of Joining"
-                  type="date"
+                  label="Date of Joining (DD/MM/YYYY)"
+                  type="text"
                   value={formData.date_of_joining}
                   onChange={(e) => handleInputChange('date_of_joining', e.target.value)}
+                  placeholder="DD/MM/YYYY"
+                  maxLength={10}
                 />
                 <FormInput
                   label="Qualification"

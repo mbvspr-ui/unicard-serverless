@@ -85,15 +85,15 @@ export default function EditStaff() {
         if (response.success && response.data) {
           const staff = response.data;
           
-          // Helper function to convert ISO date to yyyy-MM-dd format
+          // Helper function to convert ISO date to DD/MM/YYYY format
           const formatDateForInput = (isoDate: string | null | undefined): string => {
             if (!isoDate) return '';
             try {
               const date = new Date(isoDate);
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, '0');
               const day = String(date.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const year = date.getFullYear();
+              return `${day}/${month}/${year}`;
             } catch {
               return '';
             }
@@ -344,6 +344,32 @@ export default function EditStaff() {
     setShowPreview(true);
   };
 
+  // Convert DD/MM/YYYY to ISO format (YYYY-MM-DD)
+  const convertDateToISO = (dateStr: string): string | undefined => {
+    if (!dateStr || dateStr.trim() === '') return undefined;
+    
+    // Check if already in ISO format (YYYY-MM-DD)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    
+    // Parse DD/MM/YYYY format
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2];
+      
+      // Validate date
+      const date = new Date(`${year}-${month}-${day}`);
+      if (!isNaN(date.getTime())) {
+        return `${year}-${month}-${day}`;
+      }
+    }
+    
+    return undefined;
+  };
+
   // Confirm and save changes
   const handleConfirmSave = async () => {
     if (!staffId) {
@@ -356,7 +382,14 @@ export default function EditStaff() {
       // Build update object with only selected fields
       const updates: any = {};
       selectedFields.forEach(field => {
-        updates[field] = formData[field as keyof StaffInput];
+        let value = formData[field as keyof StaffInput];
+        
+        // Convert dates if they're date fields
+        if ((field === 'date_of_birth' || field === 'date_of_joining') && typeof value === 'string') {
+          value = convertDateToISO(value) as any;
+        }
+        
+        updates[field] = value;
       });
       
       // Clean up phone numbers
@@ -682,11 +715,13 @@ export default function EditStaff() {
                         </div>
                       ) : (
                         <FormInput
-                          label="Date of Birth"
-                          type="date"
+                          label="Date of Birth (DD/MM/YYYY)"
+                          type="text"
                           value={formData.date_of_birth}
                           onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
                           disabled={!selectedFields.has('date_of_birth')}
+                          placeholder="DD/MM/YYYY"
+                          maxLength={10}
                         />
                       )}
                     </div>
@@ -868,11 +903,13 @@ export default function EditStaff() {
                         </div>
                       ) : (
                         <FormInput
-                          label="Date of Joining"
-                          type="date"
+                          label="Date of Joining (DD/MM/YYYY)"
+                          type="text"
                           value={formData.date_of_joining}
                           onChange={(e) => handleInputChange('date_of_joining', e.target.value)}
                           disabled={!selectedFields.has('date_of_joining')}
+                          placeholder="DD/MM/YYYY"
+                          maxLength={10}
                         />
                       )}
                     </div>

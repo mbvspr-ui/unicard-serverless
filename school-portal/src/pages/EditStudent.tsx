@@ -23,7 +23,7 @@ import { PlusCircle, Edit2, Trash2 } from 'lucide-react';
 import { addCacheBuster, clearPhotoCache } from '../utils/photo';
 
 const CLASSES = [
-  'Nursery', 'KG', 'LKG', 'UKG',
+  'Nursery', 'KG', 'KG1', 'KG2', 'LKG', 'UKG',
   'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
   'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
   'Class 11', 'Class 12'
@@ -87,15 +87,15 @@ export default function EditStudent() {
         if (response.success && response.data) {
           const student = response.data;
           
-          // Helper function to convert ISO date to yyyy-MM-dd format
+          // Helper function to convert ISO date to DD/MM/YYYY format
           const formatDateForInput = (isoDate: string | null | undefined): string => {
             if (!isoDate) return '';
             try {
               const date = new Date(isoDate);
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, '0');
               const day = String(date.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const year = date.getFullYear();
+              return `${day}/${month}/${year}`;
             } catch {
               return '';
             }
@@ -325,6 +325,32 @@ export default function EditStudent() {
     setShowPreview(true);
   };
 
+  // Convert DD/MM/YYYY to ISO format (YYYY-MM-DD)
+  const convertDateToISO = (dateStr: string): string | undefined => {
+    if (!dateStr || dateStr.trim() === '') return undefined;
+    
+    // Check if already in ISO format (YYYY-MM-DD)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    
+    // Parse DD/MM/YYYY format
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2];
+      
+      // Validate date
+      const date = new Date(`${year}-${month}-${day}`);
+      if (!isNaN(date.getTime())) {
+        return `${year}-${month}-${day}`;
+      }
+    }
+    
+    return undefined;
+  };
+
   // Confirm and save changes
   const handleConfirmSave = async () => {
     if (!studentId) {
@@ -338,7 +364,14 @@ export default function EditStudent() {
       const updates: any = {};
       selectedFields.forEach(field => {
         if (field !== 'photo') {
-          updates[field] = formData[field as keyof StudentInput];
+          let value = formData[field as keyof StudentInput];
+          
+          // Convert date if it's date_of_birth field
+          if (field === 'date_of_birth' && typeof value === 'string') {
+            value = convertDateToISO(value) as any;
+          }
+          
+          updates[field] = value;
         }
       });
       
@@ -535,11 +568,13 @@ export default function EditStudent() {
                       ) : (
                         <FormInput
                           id="date_of_birth"
-                          label="Date of Birth"
-                          type="date"
+                          label="Date of Birth (DD/MM/YYYY)"
+                          type="text"
                           value={formData.date_of_birth || ''}
                           onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
                           disabled={!selectedFields.has('date_of_birth')}
+                          placeholder="DD/MM/YYYY"
+                          maxLength={10}
                         />
                       )}
                     </div>

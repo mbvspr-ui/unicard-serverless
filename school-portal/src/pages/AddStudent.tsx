@@ -21,7 +21,7 @@ import { StudentInput } from '../types';
 import { PlusCircle, CheckCircle2 } from 'lucide-react';
 
 const CLASSES = [
-  'Nursery', 'KG', 'LKG', 'UKG',
+  'Nursery', 'KG', 'KG1', 'KG2', 'LKG', 'UKG',
   'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
   'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
   'Class 11', 'Class 12'
@@ -173,14 +173,58 @@ export default function AddStudent() {
     toast.success('Photo removed');
   };
 
+  // Convert DD/MM/YYYY to ISO format (YYYY-MM-DD)
+  const convertDateToISO = (dateStr: string): string | undefined => {
+    if (!dateStr || dateStr.trim() === '') return undefined;
+    
+    // Check if already in ISO format (YYYY-MM-DD)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    
+    // Parse DD/MM/YYYY format
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2];
+      
+      // Validate date
+      const date = new Date(`${year}-${month}-${day}`);
+      if (!isNaN(date.getTime())) {
+        return `${year}-${month}-${day}`;
+      }
+    }
+    
+    return undefined;
+  };
+
+  // Convert ISO format to DD/MM/YYYY for display
+  const convertISOToDisplay = (isoDate: string | undefined): string => {
+    if (!isoDate) return '';
+    
+    // If already in DD/MM/YYYY format, return as is
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(isoDate)) {
+      return isoDate;
+    }
+    
+    // Convert from YYYY-MM-DD to DD/MM/YYYY
+    const parts = isoDate.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    
+    return '';
+  };
+
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'N/A';
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      const date = new Date(dateString);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
     } catch {
       return 'N/A';
     }
@@ -242,9 +286,13 @@ export default function AddStudent() {
     setLoading(true);
 
     try {
+      // Convert date from DD/MM/YYYY to ISO format
+      const convertedDate = formData.date_of_birth ? convertDateToISO(formData.date_of_birth) : undefined;
+      
       // Clean up phone number if it's just +91
       const dataToSubmit = {
         ...formData,
+        date_of_birth: convertedDate,
         phone_number: formData.phone_number === '+91' ? undefined : formData.phone_number,
       };
 
@@ -354,10 +402,12 @@ export default function AddStudent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormInput
                     id="date_of_birth"
-                    label="Date of Birth"
-                    type="date"
+                    label="Date of Birth (DD/MM/YYYY)"
+                    type="text"
                     value={formData.date_of_birth || ''}
                     onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                    placeholder="DD/MM/YYYY"
+                    maxLength={10}
                   />
 
                   <FormSelect
