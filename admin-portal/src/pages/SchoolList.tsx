@@ -27,8 +27,12 @@ export default function SchoolList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalSchools, setTotalSchools] = useState(0);
+  const [limit] = useState(50); // Show 50 schools per page
 
-  const fetchSchools = async (showRefreshIndicator = false) => {
+  const fetchSchools = async (showRefreshIndicator = false, page = 1) => {
     if (showRefreshIndicator) {
       setIsRefreshing(true);
     } else {
@@ -37,7 +41,7 @@ export default function SchoolList() {
 
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${API_URL}/api/admin/schools`, {
+      const response = await fetch(`${API_URL}/api/admin/schools?page=${page}&limit=${limit}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -50,6 +54,12 @@ export default function SchoolList() {
       const data = await response.json();
       setSchools(data.data || []);
       setFilteredSchools(data.data || []);
+      
+      if (data.pagination) {
+        setTotalPages(data.pagination.pages);
+        setTotalSchools(data.pagination.total);
+        setCurrentPage(data.pagination.page);
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to load schools');
     } finally {
@@ -59,8 +69,8 @@ export default function SchoolList() {
   };
 
   useEffect(() => {
-    fetchSchools();
-  }, []);
+    fetchSchools(false, currentPage);
+  }, [currentPage]);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -81,7 +91,19 @@ export default function SchoolList() {
 
 
   const handleRefresh = () => {
-    fetchSchools(true);
+    fetchSchools(true, currentPage);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
   };
 
   return (
@@ -123,7 +145,12 @@ export default function SchoolList() {
           </div>
           
           <div className="text-sm text-muted-foreground">
-            Total Schools: <span className="font-semibold">{schools.length}</span>
+            Total Schools: <span className="font-semibold">{totalSchools}</span>
+            {totalPages > 1 && (
+              <span className="ml-2">
+                (Page {currentPage} of {totalPages})
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -181,6 +208,33 @@ export default function SchoolList() {
               </CardContent>
             </Card>
           ))
+        )}
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && !isLoading && (
+          <div className="flex items-center justify-center gap-2 pt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              className="min-h-[44px]"
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground px-4">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className="min-h-[44px]"
+            >
+              Next
+            </Button>
+          </div>
         )}
       </div>
     </div>

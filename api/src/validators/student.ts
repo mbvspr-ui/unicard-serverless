@@ -23,13 +23,10 @@ export const studentSchema = z.object({
     .optional(),
   blood_group: z.string().optional(),
   address: z.string().optional(),
-  state: z.string().min(1, 'State is required'),
-  district: z.string().min(1, 'District is required'),
-  city: z.string().min(1, 'City is required'),
-  pincode: z
-    .string()
-    .regex(pincodeRegex, 'Pincode must be exactly 6 digits')
-    .min(1, 'Pincode is required'),
+  state: z.string().optional().default('N/A'),
+  district: z.string().optional().default('N/A'),
+  city: z.string().optional().default('N/A'),
+  pincode: z.string().optional().default('000000'),
   photo_url: z.string().optional(),
 });
 
