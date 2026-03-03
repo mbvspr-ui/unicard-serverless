@@ -44,10 +44,10 @@ export default function AddStaff() {
     date_of_joining: '',
     qualification: '',
     address: '',
-    state: '',
-    district: '',
-    city: '',
-    pincode: '',
+    state: 'N/A',
+    district: 'N/A',
+    city: 'N/A',
+    pincode: '000000',
     emergency_contact_name: '',
     emergency_contact_number: '+91',
     emergency_contact_relationship: '',
@@ -152,11 +152,7 @@ export default function AddStaff() {
     if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.staff_type) newErrors.staff_type = 'Staff type is required';
     if (!formData.designation.trim()) newErrors.designation = 'Designation is required';
-    if (!formData.state) newErrors.state = 'State is required';
-    if (!formData.district) newErrors.district = 'District is required';
-    if (!formData.city.trim()) newErrors.city = 'City is required';
-    if (!formData.pincode.trim()) newErrors.pincode = 'Pincode is required';
-    else if (!/^\d{6}$/.test(formData.pincode)) newErrors.pincode = 'Pincode must be 6 digits';
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
 
     // Phone number validation (if provided)
     if (formData.phone_number && formData.phone_number !== '+91') {
@@ -407,46 +403,13 @@ export default function AddStaff() {
               <h3 className="text-lg font-semibold mb-4">Address Information</h3>
               <div className="grid grid-cols-1 gap-4">
                 <FormTextarea
-                  label="Address"
+                  label="Full Address *"
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                  placeholder="Enter full address"
-                  rows={2}
+                  error={errors.address}
+                  placeholder="Enter complete address including city, state, and pincode"
+                  rows={4}
                 />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormSelect
-                    label="State *"
-                    value={formData.state}
-                    onValueChange={handleStateChange}
-                    options={states.map(s => ({ value: s, label: s }))}
-                    error={errors.state}
-                    placeholder="Select state"
-                  />
-                  <FormSelect
-                    label="District *"
-                    value={formData.district}
-                    onValueChange={(value) => handleInputChange('district', value)}
-                    options={districts.map(d => ({ value: d, label: d }))}
-                    error={errors.district}
-                    placeholder="Select district"
-                    disabled={!formData.state || loadingDistricts}
-                  />
-                  <FormInput
-                    label="City *"
-                    value={formData.city}
-                    onChange={(e) => handleInputChange('city', e.target.value)}
-                    error={errors.city}
-                    placeholder="Enter city"
-                  />
-                  <FormInput
-                    label="Pincode *"
-                    value={formData.pincode}
-                    onChange={(e) => handleInputChange('pincode', e.target.value)}
-                    error={errors.pincode}
-                    placeholder="Enter 6-digit pincode"
-                    maxLength={6}
-                  />
-                </div>
               </div>
             </div>
 

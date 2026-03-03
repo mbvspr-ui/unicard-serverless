@@ -32,14 +32,11 @@ export const staffSchema = z.object({
   qualification: z.string().optional(),
   
   // Address Information
-  address: z.string().optional(),
-  state: z.string().min(1, 'State is required'),
-  district: z.string().min(1, 'District is required'),
-  city: z.string().min(1, 'City is required'),
-  pincode: z
-    .string()
-    .regex(pincodeRegex, 'Pincode must be exactly 6 digits')
-    .min(1, 'Pincode is required'),
+  address: z.string().min(1, 'Address is required'),
+  state: z.string().optional(),
+  district: z.string().optional(),
+  city: z.string().optional(),
+  pincode: z.string().optional(),
   
   // Emergency Contact
   emergency_contact_name: z.string().optional(),

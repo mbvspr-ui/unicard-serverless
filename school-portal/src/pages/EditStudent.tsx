@@ -827,110 +827,13 @@ export default function EditStudent() {
                   <div className="flex-1">
                     <FormTextarea
                       id="address"
-                      label="Address"
+                      label="Full Address"
                       value={formData.address || ''}
                       onChange={(e) => handleInputChange('address', e.target.value)}
                       disabled={!selectedFields.has('address')}
-                      placeholder="Enter complete address"
-                      rows={3}
+                      placeholder="Enter complete address including city, state, and pincode"
+                      rows={4}
                     />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      id="edit-state"
-                      checked={selectedFields.has('state')}
-                      onCheckedChange={(checked) => toggleField('state', checked as boolean)}
-                      className="mt-8"
-                      title="Check to edit this field"
-                    />
-                    <div className="flex-1">
-                      <FormSelect
-                        id="state"
-                        label="State"
-                        required
-                        value={formData.state || undefined}
-                        onValueChange={handleStateChange}
-                        error={errors.state}
-                        disabled={!selectedFields.has('state')}
-                        placeholder="Select state"
-                        options={states.map(s => ({ value: s, label: s }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      id="edit-district"
-                      checked={selectedFields.has('district')}
-                      onCheckedChange={(checked) => toggleField('district', checked as boolean)}
-                      className="mt-8"
-                      title="Check to edit this field"
-                    />
-                    <div className="flex-1">
-                      <FormSelect
-                        id="district"
-                        label="District"
-                        required
-                        value={formData.district || undefined}
-                        onValueChange={(value) => handleInputChange('district', value)}
-                        error={errors.district}
-                        disabled={!selectedFields.has('district') || !formData.state || loadingDistricts}
-                        placeholder={loadingDistricts ? 'Loading...' : 'Select district'}
-                        options={districts.map(d => ({ value: d, label: d }))}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      id="edit-city"
-                      checked={selectedFields.has('city')}
-                      onCheckedChange={(checked) => toggleField('city', checked as boolean)}
-                      className="mt-8"
-                      title="Check to edit this field"
-                    />
-                    <div className="flex-1">
-                      <FormInput
-                        id="city"
-                        label="City"
-                        required
-                        value={formData.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                        error={errors.city}
-                        disabled={!selectedFields.has('city')}
-                        placeholder="Enter city"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      id="edit-pincode"
-                      checked={selectedFields.has('pincode')}
-                      onCheckedChange={(checked) => toggleField('pincode', checked as boolean)}
-                      className="mt-8"
-                      title="Check to edit this field"
-                    />
-                    <div className="flex-1">
-                      <FormInput
-                        id="pincode"
-                        label="Pincode"
-                        required
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={formData.pincode}
-                        onChange={(e) => handleInputChange('pincode', e.target.value)}
-                        error={errors.pincode}
-                        disabled={!selectedFields.has('pincode')}
-                        placeholder="Enter 6-digit pincode"
-                      />
-                    </div>
                   </div>
                 </div>
               </div>
