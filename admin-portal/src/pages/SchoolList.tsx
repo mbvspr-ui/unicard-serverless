@@ -212,28 +212,33 @@ export default function SchoolList() {
         
         {/* Pagination Controls */}
         {totalPages > 1 && !isLoading && (
-          <div className="flex items-center justify-center gap-2 pt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-              className="min-h-[44px]"
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-muted-foreground px-4">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-              className="min-h-[44px]"
-            >
-              Next
-            </Button>
+          <div className="flex flex-col items-center gap-3 pt-6 pb-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalSchools)} of {totalSchools} schools
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                className="min-h-[44px]"
+              >
+                Previous
+              </Button>
+              <span className="text-sm font-medium px-4">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="min-h-[44px]"
+              >
+                Next
+              </Button>
+            </div>
           </div>
         )}
       </div>
