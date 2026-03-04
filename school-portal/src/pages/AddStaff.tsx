@@ -8,6 +8,7 @@ import { FormSelect } from '../components/ui/form-select';
 import { FormTextarea } from '../components/ui/form-textarea';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { PhotoEditor } from '../components/PhotoEditor';
+import { DateInput } from '../components/ui/date-input';
 import { staffApi, locationApi } from '../lib/api';
 import { StaffInput } from '../types';
 import { Briefcase } from 'lucide-react';
@@ -152,6 +153,7 @@ export default function AddStaff() {
     if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.staff_type) newErrors.staff_type = 'Staff type is required';
     if (!formData.designation.trim()) newErrors.designation = 'Designation is required';
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
 
     // Phone number validation (if provided)
     if (formData.phone_number && formData.phone_number !== '+91') {
@@ -318,13 +320,10 @@ export default function AddStaff() {
                   onChange={(e) => handleInputChange('father_spouse_name', e.target.value)}
                   placeholder="Enter father's or spouse name"
                 />
-                <FormInput
-                  label="Date of Birth (DD/MM/YYYY)"
-                  type="text"
+                <DateInput
+                  label="Date of Birth"
                   value={formData.date_of_birth}
-                  onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                  placeholder="DD/MM/YYYY"
-                  maxLength={10}
+                  onChange={(value) => handleInputChange('date_of_birth', value)}
                 />
                 <FormSelect
                   label="Gender"
@@ -380,13 +379,10 @@ export default function AddStaff() {
                   onChange={(e) => handleInputChange('department', e.target.value)}
                   placeholder="e.g., Mathematics"
                 />
-                <FormInput
-                  label="Date of Joining (DD/MM/YYYY)"
-                  type="text"
+                <DateInput
+                  label="Date of Joining"
                   value={formData.date_of_joining}
-                  onChange={(e) => handleInputChange('date_of_joining', e.target.value)}
-                  placeholder="DD/MM/YYYY"
-                  maxLength={10}
+                  onChange={(value) => handleInputChange('date_of_joining', value)}
                 />
                 <FormInput
                   label="Qualification"
@@ -402,11 +398,11 @@ export default function AddStaff() {
               <h3 className="text-lg font-semibold mb-4">Address Information</h3>
               <div className="grid grid-cols-1 gap-4">
                 <FormTextarea
-                  label="Full Address"
+                  label="Full Address *"
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
                   error={errors.address}
-                  placeholder="Enter complete address (optional)"
+                  placeholder="Enter complete address"
                   rows={4}
                 />
                 

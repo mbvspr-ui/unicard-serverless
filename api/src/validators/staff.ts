@@ -32,7 +32,7 @@ export const staffSchema = z.object({
   qualification: z.string().optional(),
   
   // Address Information
-  address: z.string().optional(),
+  address: z.string().min(1, 'Address is required'),
   state: z.string().optional(),
   district: z.string().optional(),
   city: z.string().optional(),

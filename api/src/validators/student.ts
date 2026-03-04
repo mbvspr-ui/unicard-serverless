@@ -22,7 +22,7 @@ export const studentSchema = z.object({
     .regex(phoneRegex, 'Phone number must be in format +91XXXXXXXXXX')
     .optional(),
   blood_group: z.string().optional(),
-  address: z.string().optional(),
+  address: z.string().min(1, 'Address is required'),
   state: z.string().optional(),
   district: z.string().optional(),
   city: z.string().optional(),

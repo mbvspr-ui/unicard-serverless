@@ -18,7 +18,7 @@ import {
 import { PhotoEditor } from '../components/PhotoEditor';
 import { studentApi, locationApi } from '../lib/api';
 import { StudentInput } from '../types';
-import { PlusCircle, CheckCircle2 } from 'lucide-react';
+import { DateInput } from '../components/ui/date-input';
 
 const CLASSES = [
   'Nursery', 'KG', 'KG1', 'KG2', 'LKG', 'UKG',
@@ -240,6 +240,9 @@ export default function AddStudent() {
     if (!formData.class) {
       newErrors.class = 'Class is required';
     }
+    if (!formData.address || !formData.address.trim()) {
+      newErrors.address = 'Full address is required';
+    }
 
     // Phone number validation (if provided)
     if (formData.phone_number && formData.phone_number !== '+91') {
@@ -386,14 +389,12 @@ export default function AddStudent() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormInput
+                  <DateInput
                     id="date_of_birth"
-                    label="Date of Birth (DD/MM/YYYY)"
-                    type="text"
+                    label="Date of Birth"
                     value={formData.date_of_birth || ''}
-                    onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                    placeholder="DD/MM/YYYY"
-                    maxLength={10}
+                    onChange={(value) => handleInputChange('date_of_birth', value)}
+                    error={errors.date_of_birth}
                   />
 
                   <FormSelect
@@ -535,10 +536,11 @@ export default function AddStudent() {
                 <FormTextarea
                   id="address"
                   label="Full Address"
+                  required
                   value={formData.address || ''}
                   onChange={(e) => handleInputChange('address', e.target.value)}
                   error={errors.address}
-                  placeholder="Enter complete address (optional)"
+                  placeholder="Enter complete address"
                   rows={4}
                 />
                 
