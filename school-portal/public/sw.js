@@ -77,10 +77,38 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets - cache first, network fallback
+  // Version check - always fetch fresh
+  if (url.pathname === '/version.json') {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Static assets - network first for HTML, cache first for others
   event.respondWith(
     caches.match(request)
       .then((cachedResponse) => {
+        // For HTML files, try network first to get fresh content
+        if (request.headers.get('Accept')?.includes('text/html') || 
+            url.pathname === '/' || 
+            url.pathname.endsWith('.html')) {
+          return fetch(request)
+            .then((response) => {
+              // Update cache with fresh response
+              if (response && response.status === 200) {
+                const responseClone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                  cache.put(request, responseClone);
+                });
+              }
+              return response;
+            })
+            .catch(() => {
+              // Fall back to cache if network fails
+              return cachedResponse;
+            });
+        }
+
+        // For other static assets, use cache first
         if (cachedResponse) {
           return cachedResponse;
         }

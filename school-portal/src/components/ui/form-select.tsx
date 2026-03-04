@@ -4,6 +4,7 @@ import { Label } from "./label"
 import { cn } from "@/lib/utils"
 
 export interface FormSelectProps {
+  id?: string
   label?: string
   error?: string
   helperText?: string
@@ -17,8 +18,8 @@ export interface FormSelectProps {
 }
 
 const FormSelect = React.forwardRef<HTMLButtonElement, FormSelectProps>(
-  ({ label, error, helperText, required, placeholder, options, value, onValueChange, disabled, className }, ref) => {
-    const selectId = `select-${label?.toLowerCase().replace(/\s+/g, '-')}`
+  ({ id, label, error, helperText, required, placeholder, options, value, onValueChange, disabled, className }, ref) => {
+    const selectId = id || `select-${label?.toLowerCase().replace(/\s+/g, '-') || 'field'}`
     
     return (
       <div className="space-y-2 w-full">

@@ -7,6 +7,11 @@ export interface School {
   status: 'pending' | 'approved' | 'rejected';
   logo_url: string | null;
   signature_url: string | null;
+  city: string | null;
+  state: string | null;
+  pincode: string | null;
+  principal_name: string | null;
+  created_at: string | null;
 }
 
 export interface AuthState {

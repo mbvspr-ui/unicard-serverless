@@ -14,7 +14,7 @@ export const checkVersion = (): boolean => {
 };
 
 // Check remote version from server
-export const checkRemoteVersion = async (): Promise<boolean> => {
+export const checkRemoteVersion = async (): Promise<{needsUpdate: boolean; remoteVersion: string | null}> => {
   try {
     const response = await fetch('/version.json?t=' + Date.now(), {
       cache: 'no-cache',
@@ -25,7 +25,7 @@ export const checkRemoteVersion = async (): Promise<boolean> => {
     });
     
     if (!response.ok) {
-      return true; // If can't fetch, assume no update needed
+      return {needsUpdate: false, remoteVersion: null}; // If can't fetch, assume no update needed
     }
     
     const data = await response.json();
@@ -35,18 +35,18 @@ export const checkRemoteVersion = async (): Promise<boolean> => {
     const storedVersion = localStorage.getItem(VERSION_KEY);
     
     if (storedVersion && storedVersion !== remoteVersion) {
-      return false; // Version mismatch - update needed
+      return {needsUpdate: true, remoteVersion}; // Version mismatch - update needed
     }
     
-    return true; // Versions match
+    return {needsUpdate: false, remoteVersion}; // Versions match
   } catch (error) {
     // If fetch fails, fall back to local check
-    return checkVersion();
+    return {needsUpdate: !checkVersion(), remoteVersion: null};
   }
 };
 
-export const updateVersion = (): void => {
-  localStorage.setItem(VERSION_KEY, APP_VERSION);
+export const updateVersion = (version?: string): void => {
+  localStorage.setItem(VERSION_KEY, version || APP_VERSION);
 };
 
 export const clearAppCache = async (): Promise<void> => {

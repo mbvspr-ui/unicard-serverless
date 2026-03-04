@@ -9,6 +9,7 @@ const CHECK_INTERVAL = 30000; // Check every 30 seconds
 export default function UpdateNotification() {
   const [showUpdate, setShowUpdate] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [remoteVersion, setRemoteVersion] = useState<string | null>(null);
 
   const checkForUpdate = async () => {
     // First check local version
@@ -19,9 +20,10 @@ export default function UpdateNotification() {
     }
 
     // Then check remote version
-    const remoteMatch = await checkRemoteVersion();
-    if (!remoteMatch) {
+    const {needsUpdate, remoteVersion} = await checkRemoteVersion();
+    if (needsUpdate) {
       setShowUpdate(true);
+      setRemoteVersion(remoteVersion);
     }
   };
 
@@ -63,21 +65,21 @@ export default function UpdateNotification() {
       // Clear cache
       await clearAppCache();
       
-      // Update version
-      updateVersion();
+      // Update version to remote version if available, otherwise use APP_VERSION
+      updateVersion(remoteVersion);
       
-      // Force reload
-      window.location.reload();
+      // Force reload with cache bypass
+      window.location.href = window.location.href + '?t=' + Date.now();
     } catch (error) {
       console.error('Update error:', error);
-      // Force reload anyway
-      window.location.reload();
+      // Force reload anyway with cache bypass
+      window.location.href = window.location.href + '?t=' + Date.now();
     }
   };
 
   const handleDismiss = () => {
-    // Update version without clearing cache (not recommended)
-    updateVersion();
+    // Update version to remote version if available, otherwise use APP_VERSION
+    updateVersion(remoteVersion);
     setShowUpdate(false);
   };
 
@@ -99,7 +101,7 @@ export default function UpdateNotification() {
               A new version of the admin portal is available. Please update to get the latest features and improvements.
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-500 mb-4">
-              Version: {APP_VERSION}
+              Current: {APP_VERSION} → New: {remoteVersion || 'Unknown'}
             </p>
             
             <div className="flex gap-2">
