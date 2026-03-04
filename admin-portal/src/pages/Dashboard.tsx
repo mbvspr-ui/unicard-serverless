@@ -54,8 +54,8 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem('admin_token');
       
-      // Fetch schools
-      const schoolsResponse = await fetch(`${API_URL}/api/admin/schools`, {
+      // Fetch schools (with high limit to get all for stats)
+      const schoolsResponse = await fetch(`${API_URL}/api/admin/schools?limit=1000`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       
