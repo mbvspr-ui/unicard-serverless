@@ -23,10 +23,10 @@ export const studentSchema = z.object({
     .optional(),
   blood_group: z.string().optional(),
   address: z.string().optional(),
-  state: z.string().optional().default('N/A'),
-  district: z.string().optional().default('N/A'),
-  city: z.string().optional().default('N/A'),
-  pincode: z.string().optional().default('000000'),
+  state: z.string().optional(),
+  district: z.string().optional(),
+  city: z.string().optional(),
+  pincode: z.string().optional(),
   photo_url: z.string().optional(),
 });
 

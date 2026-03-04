@@ -53,10 +53,10 @@ export interface StudentInput {
   phone_number?: string;
   blood_group?: string;
   address?: string;
-  state: string;
-  district: string;
-  city: string;
-  pincode: string;
+  state?: string;
+  district?: string;
+  city?: string;
+  pincode?: string;
 }
 
 export interface Staff {
@@ -102,10 +102,10 @@ export interface StaffInput {
   date_of_joining?: string;
   qualification?: string;
   address?: string;
-  state: string;
-  district: string;
-  city: string;
-  pincode: string;
+  state?: string;
+  district?: string;
+  city?: string;
+  pincode?: string;
   emergency_contact_name?: string;
   emergency_contact_number?: string;
   emergency_contact_relationship?: string;

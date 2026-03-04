@@ -62,10 +62,10 @@ export default function AddStudent() {
     phone_number: '+91',
     blood_group: '',
     address: '',
-    state: 'N/A',
-    district: 'N/A',
-    city: 'N/A',
-    pincode: '000000',
+    state: '',
+    district: '',
+    city: '',
+    pincode: '',
   });
 
   // Load states on mount
@@ -239,9 +239,6 @@ export default function AddStudent() {
     }
     if (!formData.class) {
       newErrors.class = 'Class is required';
-    }
-    if (!formData.address || !formData.address.trim()) {
-      newErrors.address = 'Full address is required';
     }
 
     // Phone number validation (if provided)
@@ -544,13 +541,53 @@ export default function AddStudent() {
                 <FormTextarea
                   id="address"
                   label="Full Address"
-                  required
                   value={formData.address || ''}
                   onChange={(e) => handleInputChange('address', e.target.value)}
                   error={errors.address}
-                  placeholder="Enter complete address including city, state, and pincode"
+                  placeholder="Enter complete address (optional)"
                   rows={4}
                 />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormSelect
+                    id="state"
+                    label="State"
+                    value={formData.state}
+                    onValueChange={handleStateChange}
+                    placeholder="Select state (optional)"
+                    options={states.map(s => ({ value: s, label: s }))}
+                  />
+
+                  <FormSelect
+                    id="district"
+                    label="District"
+                    value={formData.district}
+                    onValueChange={(value) => handleInputChange('district', value)}
+                    placeholder="Select district (optional)"
+                    options={districts.map(d => ({ value: d, label: d }))}
+                    disabled={!formData.state || loadingDistricts}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormInput
+                    id="city"
+                    label="City"
+                    value={formData.city || ''}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    placeholder="Enter city (optional)"
+                  />
+
+                  <FormInput
+                    id="pincode"
+                    label="Pincode"
+                    value={formData.pincode || ''}
+                    onChange={(e) => handleInputChange('pincode', e.target.value)}
+                    placeholder="Enter pincode (optional)"
+                    maxLength={6}
+                    inputMode="numeric"
+                  />
+                </div>
               </div>
             </div>
 
