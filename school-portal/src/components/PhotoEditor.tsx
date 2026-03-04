@@ -541,7 +541,7 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
         <DialogHeader>
           <DialogTitle>Photo Editor</DialogTitle>
           <DialogDescription>
-            Upload, capture, and edit student photos with filters and background removal
+            Upload, capture, and edit student photos with filters
           </DialogDescription>
         </DialogHeader>
 
@@ -710,6 +710,8 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
                     <RotateCw className="w-4 h-4 mr-2" />
                     Rotate
                   </Button>
+                  {/* Background remover temporarily disabled */}
+                  {false && (
                   <div className="flex flex-col gap-1">
                     <Button
                       onClick={handleRemoveBackground}
@@ -737,6 +739,7 @@ export const PhotoEditor = ({ onClose, onSave, initialImage }: PhotoEditorProps)
                       </p>
                     )}
                   </div>
+                  )}
                   <Button
                     onClick={() => {
                       if (fileInputRef.current) {

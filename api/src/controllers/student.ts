@@ -61,7 +61,7 @@ export const createStudent = async (
       schoolId,
       data.name,
       data.father_name || null,
-      data.mother_name,
+      data.mother_name || null,
       data.class,
       data.section || null,
       data.roll_number || null,
@@ -71,10 +71,10 @@ export const createStudent = async (
       data.phone_number || null,
       data.blood_group || null,
       data.address || null,
-      data.state,
-      data.district,
-      data.city,
-      data.pincode,
+      data.state || null,
+      data.district || null,
+      data.city || null,
+      data.pincode || null,
     ];
 
     const student = await executeQueryOne(sql, values);
