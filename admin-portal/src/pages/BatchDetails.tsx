@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { ArrowLeft, Download, FileText, Image as ImageIcon, Users, Calendar, Building2 } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Image as ImageIcon, Users, Calendar, Building2, FileSpreadsheet } from 'lucide-react';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
 
@@ -71,6 +71,7 @@ export default function BatchDetails() {
   const [batchDetails, setBatchDetails] = useState<BatchDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloadingCSV, setIsDownloadingCSV] = useState(false);
+  const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
   const [isDownloadingStaffCSV, setIsDownloadingStaffCSV] = useState(false);
   const [isDownloadingPhotos, setIsDownloadingPhotos] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -132,6 +133,38 @@ export default function BatchDetails() {
       toast.error(error.message || 'Failed to download CSV');
     } finally {
       setIsDownloadingCSV(false);
+    }
+  };
+
+  const handleDownloadExcel = async () => {
+    setIsDownloadingExcel(true);
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch(`${API_URL}/api/admin/batches/${id}/excel`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download Excel');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `batch-${id}-students.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Excel downloaded successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to download Excel');
+    } finally {
+      setIsDownloadingExcel(false);
     }
   };
 
@@ -476,6 +509,26 @@ export default function BatchDetails() {
                 <>
                   <FileText className="w-5 h-5 mr-2" />
                   Download Staff Data (CSV)
+                </>
+              )}
+            </Button>
+
+            <Button
+              onClick={handleDownloadExcel}
+              disabled={isDownloadingExcel}
+              className="w-full min-h-[48px] text-base"
+              size="lg"
+              variant="outline"
+            >
+              {isDownloadingExcel ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  Downloading Excel...
+                </>
+              ) : (
+                <>
+                  <FileSpreadsheet className="w-5 h-5 mr-2" />
+                  Download Student Data (Excel)
                 </>
               )}
             </Button>

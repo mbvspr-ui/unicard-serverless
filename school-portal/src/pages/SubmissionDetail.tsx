@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { batchApi } from '../lib/api';
+import { FileText, FileSpreadsheet, Image as ImageIcon } from 'lucide-react';
 
 interface Student {
   id: string;
