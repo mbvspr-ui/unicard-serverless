@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../types/index.js';
 import { executeQuery, executeQueryOne } from '../utils/db-helpers.js';
 import { createObjectCsvWriter } from 'csv-writer';
+import * as XLSX from 'xlsx';
 import archiver from 'archiver';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
@@ -489,7 +490,9 @@ export const downloadBatchPhotos = async (
       try {
         if (student.photo_url) {
           const photoBuffer = await downloadFromR2(student.photo_url);
-          const filename = `${student.student_id || student.id}_${student.name.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+          // Photo field contains the database id (UUID), no extension
+          const photoNumber = student.id;
+          const filename = `${photoNumber}.png`;
           archive.append(photoBuffer, { name: `student-photos/${filename}` });
           successCount++;
         }
@@ -505,7 +508,9 @@ export const downloadBatchPhotos = async (
       try {
         if (staffMember.photo_url) {
           const photoBuffer = await downloadFromR2(staffMember.photo_url);
-          const filename = `${staffMember.employee_id || staffMember.id}_${staffMember.name.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+          // Photo field contains the database id (UUID), no extension
+          const photoNumber = staffMember.id;
+          const filename = `${photoNumber}.png`;
           archive.append(photoBuffer, { name: `staff-photos/${filename}` });
           successCount++;
         }
@@ -542,5 +547,238 @@ Photos Failed: ${failCount}
         },
       });
     }
+  }
+};
+
+/**
+ * Download batch data as Excel
+ * GET /api/admin/batches/:batchId/excel
+ */
+export const downloadBatchExcel = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { batchId } = req.params;
+
+    if (!batchId) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'BATCH_ID_MISSING',
+          message: 'Batch ID is required',
+        },
+      });
+      return;
+    }
+
+    // Get batch and verify it exists
+    const batchSql = `
+      SELECT bs.*, s.name as school_name
+      FROM batch_submissions bs
+      JOIN schools s ON bs.school_id = s.id
+      WHERE bs.id = $1
+    `;
+    const batch = await executeQueryOne<any>(batchSql, [batchId]);
+
+    if (!batch) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'BATCH_NOT_FOUND',
+          message: 'Batch submission not found',
+        },
+      });
+      return;
+    }
+
+    // Get students in this batch
+    const studentsSql = `
+      SELECT 
+        s.id,
+        s.name, 
+        s.father_name, 
+        s.mother_name, 
+        s.class, 
+        s.section,
+        s.roll_number, 
+        s.student_id as id_number, 
+        s.date_of_birth, 
+        s.gender,
+        s.phone_number, 
+        s.blood_group, 
+        s.address, 
+        s.state,
+        s.district, 
+        s.city, 
+        s.pincode,
+        s.id as photo
+      FROM students s
+      JOIN submission_members sm ON s.id = sm.member_id
+      WHERE sm.submission_id = $1 AND sm.member_type = 'student'
+      ORDER BY s.class, s.section, s.roll_number, s.name
+    `;
+    const students = await executeQuery<any>(studentsSql, [batchId]);
+
+    // Get staff in this batch
+    const staffSql = `
+      SELECT 
+        st.id,
+        'Staff' as type,
+        st.name, 
+        st.father_spouse_name as father_name, 
+        NULL as mother_name,
+        NULL as class, 
+        NULL as section, 
+        NULL as roll_number,
+        st.employee_id as id_number, 
+        st.date_of_birth, 
+        st.gender,
+        st.phone_number, 
+        st.blood_group, 
+        st.address, 
+        st.state,
+        st.district, 
+        st.city, 
+        st.pincode,
+        st.designation, 
+        st.department, 
+        st.id as photo
+      FROM staff st
+      JOIN submission_members sm ON st.id = sm.member_id
+      WHERE sm.submission_id = $1 AND sm.member_type = 'staff'
+      ORDER BY st.name
+    `;
+    const staff = await executeQuery<any>(staffSql, [batchId]);
+
+    // Combine students and staff
+    const allMembers = [...students, ...staff];
+
+    if (allMembers.length === 0) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NO_MEMBERS',
+          message: 'No members found in this batch',
+        },
+      });
+      return;
+    }
+
+    // Format data for Excel
+    const formattedMembers = allMembers.map(member => ({
+      ...member,
+      // Format date as DD/MM/YYYY
+      date_of_birth: member.date_of_birth 
+        ? new Date(member.date_of_birth).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          })
+        : '',
+      // Format phone number as text to prevent scientific notation
+      phone_number: member.phone_number ? `'${member.phone_number}` : '',
+      // Photo field contains only the number (student_id or employee_id)
+      photo: member.photo || '',
+    }));
+
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(formattedMembers);
+
+    // Define headers in order
+    const headers = [
+      'type',
+      'name',
+      'father_name',
+      'mother_name',
+      'class',
+      'section',
+      'roll_number',
+      'id_number',
+      'designation',
+      'department',
+      'date_of_birth',
+      'gender',
+      'phone_number',
+      'blood_group',
+      'address',
+      'state',
+      'district',
+      'city',
+      'pincode',
+      'photo',
+    ];
+
+    // Set column order
+    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellRef = XLSX.utils.encode_col(C) + '1';
+      const cell = worksheet[cellRef];
+      if (cell && cell.t === 's') {
+        // Reorder columns by creating new sheet with correct order
+      }
+    }
+
+    // Create ordered data
+    const orderedData = formattedMembers.map(member => {
+      const ordered: any = {};
+      headers.forEach(header => {
+        ordered[header] = member[header];
+      });
+      return ordered;
+    });
+
+    // Create new worksheet with ordered columns
+    const orderedWorksheet = XLSX.utils.json_to_sheet(orderedData, { header: headers });
+
+    // Set column widths
+    const wscols = [
+      { wch: 10 }, // type
+      { wch: 30 }, // name
+      { wch: 30 }, // father_name
+      { wch: 30 }, // mother_name
+      { wch: 10 }, // class
+      { wch: 10 }, // section
+      { wch: 10 }, // roll_number
+      { wch: 20 }, // id_number
+      { wch: 20 }, // designation
+      { wch: 20 }, // department
+      { wch: 12 }, // date_of_birth
+      { wch: 10 }, // gender
+      { wch: 15 }, // phone_number
+      { wch: 10 }, // blood_group
+      { wch: 50 }, // address
+      { wch: 20 }, // state
+      { wch: 20 }, // district
+      { wch: 20 }, // city
+      { wch: 10 }, // pincode
+      { wch: 20 }, // photo
+    ];
+    orderedWorksheet['!cols'] = wscols;
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, orderedWorksheet, 'Batch Members');
+
+    // Generate Excel file
+    const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="batch_${batch.school_name}_${batchId}.xlsx"`
+    );
+
+    res.send(excelBuffer);
+  } catch (error) {
+    console.error('Download batch Excel error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'EXPORT_ERROR',
+        message: 'Failed to generate Excel export',
+      },
+    });
   }
 };

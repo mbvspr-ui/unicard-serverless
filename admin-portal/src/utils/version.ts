@@ -1,6 +1,6 @@
 // Version management for cache busting
 // Update this version number whenever you deploy changes
-export const APP_VERSION = '1.2.5';
+export const APP_VERSION = '1.2.6';
 export const VERSION_KEY = 'admin_app_version';
 
 export const checkVersion = (): boolean => {

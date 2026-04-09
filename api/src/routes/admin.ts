@@ -16,6 +16,7 @@ import {
 } from '../controllers/admin.js';
 import {
   downloadBatchCSV,
+  downloadBatchExcel,
   downloadBatchPhotos,
   downloadStaffCSV,
 } from '../controllers/export.js';
@@ -84,6 +85,13 @@ router.get('/batches/:batchId/staff-csv', authenticateAdmin, downloadStaffCSV);
  * @access  Private (Admin)
  */
 router.get('/batches/:batchId/photos', authenticateAdmin, downloadBatchPhotos);
+
+/**
+ * @route   GET /api/admin/batches/:batchId/excel
+ * @desc    Download batch data as Excel
+ * @access  Private (Admin)
+ */
+router.get('/batches/:batchId/excel', authenticateAdmin, downloadBatchExcel);
 
 /**
  * @route   PUT /api/admin/batches/:batchId/status

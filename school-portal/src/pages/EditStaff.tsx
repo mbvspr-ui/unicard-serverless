@@ -370,6 +370,28 @@ export default function EditStaff() {
     return undefined;
   };
 
+  // Parse DD/MM/YYYY format to Date object for display
+  const parseDDMMYYYY = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return null;
+    const [day, month, year] = parts;
+    // Note: month is 0-indexed in JS Date (0 = January)
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  };
+
+  // Format date for display from DD/MM/YYYY format
+  const formatDateForDisplay = (dateStr: string): string => {
+    if (!dateStr) return 'N/A';
+    const date = parseDDMMYYYY(dateStr);
+    if (!date || isNaN(date.getTime())) return 'Invalid date';
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   // Confirm and save changes
   const handleConfirmSave = async () => {
     if (!staffId) {
@@ -706,11 +728,7 @@ export default function EditStaff() {
                             Date of Birth
                           </label>
                           <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
-                            {new Date(formData.date_of_birth).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
+                            {formatDateForDisplay(formData.date_of_birth)}
                           </div>
                         </div>
                       ) : (
@@ -894,11 +912,7 @@ export default function EditStaff() {
                             Date of Joining
                           </label>
                           <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
-                            {new Date(formData.date_of_joining).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
+                            {formatDateForDisplay(formData.date_of_joining)}
                           </div>
                         </div>
                       ) : (
@@ -1096,7 +1110,7 @@ export default function EditStaff() {
                         <span className="font-medium">{fieldLabels[field] || field}:</span>
                         <span className="text-gray-700">
                           {field.includes('date') && value
-                            ? new Date(value as string).toLocaleDateString()
+                            ? formatDateForDisplay(value as string)
                             : value || 'N/A'}
                         </span>
                       </div>

@@ -317,4 +317,64 @@ export const batchApi = {
   }>> => {
     return fetchWithAuth(`/api/batches/${batchId}`);
   },
+
+  exportExcel: async (batchId: string): Promise<Blob> => {
+    const token = getAuthToken();
+    const response = await fetch(`${API_URL}/api/batches/${batchId}/excel`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to export Excel');
+    }
+
+    return response.blob();
+  },
+
+  exportCSV: async (batchId: string): Promise<Blob> => {
+    const token = getAuthToken();
+    const response = await fetch(`${API_URL}/api/batches/${batchId}/csv`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to export CSV');
+    }
+
+    return response.blob();
+  },
+
+  exportPhotos: async (batchId: string): Promise<Blob> => {
+    const token = getAuthToken();
+    const response = await fetch(`${API_URL}/api/batches/${batchId}/photos`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to export photos');
+    }
+
+    return response.blob();
+  },
+
+  exportStaffCSV: async (batchId: string): Promise<Blob> => {
+    const token = getAuthToken();
+    const response = await fetch(`${API_URL}/api/batches/${batchId}/staff-csv`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to export staff CSV');
+    }
+
+    return response.blob();
+  },
 };
