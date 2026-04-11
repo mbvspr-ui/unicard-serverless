@@ -782,3 +782,198 @@ export const downloadBatchExcel = async (
     });
   }
 };
+
+/**
+ * Download staff data as Excel
+ * GET /api/admin/batches/:batchId/staff-excel
+ */
+export const downloadStaffExcel = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { batchId } = req.params;
+
+    if (!batchId) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'BATCH_ID_MISSING',
+          message: 'Batch ID is required',
+        },
+      });
+      return;
+    }
+
+    // Get batch and verify it exists
+    const batchSql = `
+      SELECT bs.*, s.name as school_name
+      FROM batch_submissions bs
+      JOIN schools s ON bs.school_id = s.id
+      WHERE bs.id = $1
+    `;
+    const batch = await executeQueryOne<any>(batchSql, [batchId]);
+
+    if (!batch) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'BATCH_NOT_FOUND',
+          message: 'Batch submission not found',
+        },
+      });
+      return;
+    }
+
+    // Get staff in this batch
+    const staffSql = `
+      SELECT 
+        st.id,
+        st.name, 
+        st.father_spouse_name, 
+        st.date_of_birth, 
+        st.gender,
+        st.phone_number, 
+        st.blood_group, 
+        st.address, 
+        st.state,
+        st.district, 
+        st.city, 
+        st.pincode,
+        st.designation, 
+        st.department, 
+        st.employee_id,
+        st.staff_type,
+        st.date_of_joining, 
+        st.qualification, 
+        st.experience_years,
+        st.id as photo
+      FROM staff st
+      JOIN submission_members sm ON st.id = sm.member_id
+      WHERE sm.submission_id = $1 AND sm.member_type = 'staff'
+      ORDER BY st.name
+    `;
+    const staff = await executeQuery<any>(staffSql, [batchId]);
+
+    if (staff.length === 0) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NO_STAFF',
+          message: 'No staff found in this batch',
+        },
+      });
+      return;
+    }
+
+    // Format data for Excel
+    const formattedStaff = staff.map(member => ({
+      ...member,
+      // Format dates as DD/MM/YYYY
+      date_of_birth: member.date_of_birth 
+        ? new Date(member.date_of_birth).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          })
+        : '',
+      date_of_joining: member.date_of_joining 
+        ? new Date(member.date_of_joining).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          })
+        : '',
+      // Format phone number as text to prevent scientific notation
+      phone_number: member.phone_number ? `'${member.phone_number}` : '',
+      // Photo field contains the database id (UUID), no extension
+      photo: member.id || '',
+    }));
+
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    
+    // Define headers in order
+    const headers = [
+      'name',
+      'father_spouse_name',
+      'employee_id',
+      'staff_type',
+      'designation',
+      'department',
+      'date_of_birth',
+      'gender',
+      'phone_number',
+      'blood_group',
+      'address',
+      'state',
+      'district',
+      'city',
+      'pincode',
+      'date_of_joining',
+      'qualification',
+      'experience_years',
+      'photo',
+    ];
+
+    // Create ordered data
+    const orderedData = formattedStaff.map(member => {
+      const ordered: any = {};
+      headers.forEach(header => {
+        ordered[header] = member[header];
+      });
+      return ordered;
+    });
+
+    // Create worksheet with ordered columns
+    const worksheet = XLSX.utils.json_to_sheet(orderedData, { header: headers });
+
+    // Set column widths
+    const wscols = [
+      { wch: 30 }, // name
+      { wch: 30 }, // father_spouse_name
+      { wch: 20 }, // employee_id
+      { wch: 20 }, // staff_type
+      { wch: 20 }, // designation
+      { wch: 20 }, // department
+      { wch: 12 }, // date_of_birth
+      { wch: 10 }, // gender
+      { wch: 15 }, // phone_number
+      { wch: 10 }, // blood_group
+      { wch: 50 }, // address
+      { wch: 20 }, // state
+      { wch: 20 }, // district
+      { wch: 20 }, // city
+      { wch: 10 }, // pincode
+      { wch: 12 }, // date_of_joining
+      { wch: 20 }, // qualification
+      { wch: 15 }, // experience_years
+      { wch: 20 }, // photo
+    ];
+    worksheet['!cols'] = wscols;
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Staff');
+
+    // Generate Excel file
+    const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="batch_${batch.school_name}_${batchId}_staff.xlsx"`
+    );
+
+    res.send(excelBuffer);
+  } catch (error) {
+    console.error('Download staff Excel error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'EXPORT_ERROR',
+        message: 'Failed to generate staff Excel export',
+      },
+    });
+  }
+};

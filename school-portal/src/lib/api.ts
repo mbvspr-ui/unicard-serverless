@@ -377,4 +377,19 @@ export const batchApi = {
 
     return response.blob();
   },
+
+  exportStaffExcel: async (batchId: string): Promise<Blob> => {
+    const token = getAuthToken();
+    const response = await fetch(`${API_URL}/api/batches/${batchId}/staff-excel`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to export staff Excel');
+    }
+
+    return response.blob();
+  },
 };

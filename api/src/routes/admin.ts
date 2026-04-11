@@ -19,6 +19,7 @@ import {
   downloadBatchExcel,
   downloadBatchPhotos,
   downloadStaffCSV,
+  downloadStaffExcel,
 } from '../controllers/export.js';
 
 const router = Router();
@@ -92,6 +93,13 @@ router.get('/batches/:batchId/photos', authenticateAdmin, downloadBatchPhotos);
  * @access  Private (Admin)
  */
 router.get('/batches/:batchId/excel', authenticateAdmin, downloadBatchExcel);
+
+/**
+ * @route   GET /api/admin/batches/:batchId/staff-excel
+ * @desc    Download staff data as Excel
+ * @access  Private (Admin)
+ */
+router.get('/batches/:batchId/staff-excel', authenticateAdmin, downloadStaffExcel);
 
 /**
  * @route   PUT /api/admin/batches/:batchId/status
