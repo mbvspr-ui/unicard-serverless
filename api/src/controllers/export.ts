@@ -620,53 +620,19 @@ export const downloadBatchExcel = async (
     `;
     const students = await executeQuery<any>(studentsSql, [batchId]);
 
-    // Get staff in this batch
-    const staffSql = `
-      SELECT 
-        st.id,
-        'Staff' as type,
-        st.name, 
-        st.father_spouse_name as father_name, 
-        NULL as mother_name,
-        NULL as class, 
-        NULL as section, 
-        NULL as roll_number,
-        st.employee_id as id_number, 
-        st.date_of_birth, 
-        st.gender,
-        st.phone_number, 
-        st.blood_group, 
-        st.address, 
-        st.state,
-        st.district, 
-        st.city, 
-        st.pincode,
-        st.designation, 
-        st.department, 
-        st.id as photo
-      FROM staff st
-      JOIN submission_members sm ON st.id = sm.member_id
-      WHERE sm.submission_id = $1 AND sm.member_type = 'staff'
-      ORDER BY st.name
-    `;
-    const staff = await executeQuery<any>(staffSql, [batchId]);
-
-    // Combine students and staff
-    const allMembers = [...students, ...staff];
-
-    if (allMembers.length === 0) {
+    if (students.length === 0) {
       res.status(404).json({
         success: false,
         error: {
-          code: 'NO_MEMBERS',
-          message: 'No members found in this batch',
+          code: 'NO_STUDENTS',
+          message: 'No students found in this batch',
         },
       });
       return;
     }
 
     // Format data for Excel
-    const formattedMembers = allMembers.map(member => ({
+    const formattedStudents = students.map(member => ({
       ...member,
       // Format date as DD/MM/YYYY
       date_of_birth: member.date_of_birth 
@@ -678,17 +644,15 @@ export const downloadBatchExcel = async (
         : '',
       // Format phone number as text to prevent scientific notation
       phone_number: member.phone_number ? `'${member.phone_number}` : '',
-      // Photo field contains only the number (student_id or employee_id)
-      photo: member.photo || '',
+      // Photo field contains the database id (UUID), no extension
+      photo: member.id || '',
     }));
 
     // Create workbook and worksheet
     const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(formattedMembers);
-
+    
     // Define headers in order
     const headers = [
-      'type',
       'name',
       'father_name',
       'mother_name',
@@ -696,8 +660,6 @@ export const downloadBatchExcel = async (
       'section',
       'roll_number',
       'id_number',
-      'designation',
-      'department',
       'date_of_birth',
       'gender',
       'phone_number',
@@ -710,18 +672,8 @@ export const downloadBatchExcel = async (
       'photo',
     ];
 
-    // Set column order
-    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-    for (let C = range.s.c; C <= range.e.c; ++C) {
-      const cellRef = XLSX.utils.encode_col(C) + '1';
-      const cell = worksheet[cellRef];
-      if (cell && cell.t === 's') {
-        // Reorder columns by creating new sheet with correct order
-      }
-    }
-
     // Create ordered data
-    const orderedData = formattedMembers.map(member => {
+    const orderedData = formattedStudents.map(member => {
       const ordered: any = {};
       headers.forEach(header => {
         ordered[header] = member[header];
@@ -729,12 +681,11 @@ export const downloadBatchExcel = async (
       return ordered;
     });
 
-    // Create new worksheet with ordered columns
-    const orderedWorksheet = XLSX.utils.json_to_sheet(orderedData, { header: headers });
+    // Create worksheet with ordered columns
+    const worksheet = XLSX.utils.json_to_sheet(orderedData, { header: headers });
 
     // Set column widths
     const wscols = [
-      { wch: 10 }, // type
       { wch: 30 }, // name
       { wch: 30 }, // father_name
       { wch: 30 }, // mother_name
@@ -742,8 +693,6 @@ export const downloadBatchExcel = async (
       { wch: 10 }, // section
       { wch: 10 }, // roll_number
       { wch: 20 }, // id_number
-      { wch: 20 }, // designation
-      { wch: 20 }, // department
       { wch: 12 }, // date_of_birth
       { wch: 10 }, // gender
       { wch: 15 }, // phone_number
@@ -755,10 +704,10 @@ export const downloadBatchExcel = async (
       { wch: 10 }, // pincode
       { wch: 20 }, // photo
     ];
-    orderedWorksheet['!cols'] = wscols;
+    worksheet['!cols'] = wscols;
 
     // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(workbook, orderedWorksheet, 'Batch Members');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
 
     // Generate Excel file
     const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
@@ -767,7 +716,7 @@ export const downloadBatchExcel = async (
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="batch_${batch.school_name}_${batchId}.xlsx"`
+      `attachment; filename="batch_${batch.school_name}_${batchId}_students.xlsx"`
     );
 
     res.send(excelBuffer);
