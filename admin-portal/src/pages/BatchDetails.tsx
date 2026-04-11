@@ -73,6 +73,7 @@ export default function BatchDetails() {
   const [isDownloadingCSV, setIsDownloadingCSV] = useState(false);
   const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
   const [isDownloadingStaffCSV, setIsDownloadingStaffCSV] = useState(false);
+  const [isDownloadingStaffExcel, setIsDownloadingStaffExcel] = useState(false);
   const [isDownloadingPhotos, setIsDownloadingPhotos] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
@@ -165,6 +166,38 @@ export default function BatchDetails() {
       toast.error(error.message || 'Failed to download Excel');
     } finally {
       setIsDownloadingExcel(false);
+    }
+  };
+
+  const handleDownloadStaffExcel = async () => {
+    setIsDownloadingStaffExcel(true);
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch(`${API_URL}/api/admin/batches/${id}/staff-excel`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download staff Excel');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `batch-${id}-staff.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Staff Excel downloaded successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to download staff Excel');
+    } finally {
+      setIsDownloadingStaffExcel(false);
     }
   };
 
@@ -529,6 +562,26 @@ export default function BatchDetails() {
                 <>
                   <FileSpreadsheet className="w-5 h-5 mr-2" />
                   Download Student Data (Excel)
+                </>
+              )}
+            </Button>
+
+            <Button
+              onClick={handleDownloadStaffExcel}
+              disabled={isDownloadingStaffExcel || staff.length === 0}
+              className="w-full min-h-[48px] text-base"
+              size="lg"
+              variant="outline"
+            >
+              {isDownloadingStaffExcel ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  Downloading Staff Excel...
+                </>
+              ) : (
+                <>
+                  <FileSpreadsheet className="w-5 h-5 mr-2" />
+                  Download Staff Data (Excel)
                 </>
               )}
             </Button>
