@@ -239,7 +239,7 @@ export const downloadStaffCSV = async (
         st.phone_number, st.blood_group, st.address, st.state,
         st.district, st.city, st.pincode,
         st.designation, st.department, st.employee_id, st.staff_type,
-        st.date_of_joining, st.qualification, st.experience_years
+        st.date_of_joining, st.qualification
       FROM staff st
       JOIN submission_members sm ON st.id = sm.member_id
       WHERE sm.submission_id = $1 AND sm.member_type = 'staff'
@@ -285,7 +285,6 @@ export const downloadStaffCSV = async (
         { id: 'pincode', title: 'Pincode' },
         { id: 'date_of_joining', title: 'Date of Joining' },
         { id: 'qualification', title: 'Qualification' },
-        { id: 'experience_years', title: 'Experience (Years)' },
       ],
     });
 
@@ -794,8 +793,7 @@ export const downloadStaffExcel = async (
         st.employee_id,
         st.staff_type,
         st.date_of_joining, 
-        st.qualification, 
-        st.experience_years,
+        st.qualification,
         st.id as photo
       FROM staff st
       JOIN submission_members sm ON st.id = sm.member_id
@@ -861,7 +859,6 @@ export const downloadStaffExcel = async (
       'pincode',
       'date_of_joining',
       'qualification',
-      'experience_years',
       'photo',
     ];
 
@@ -896,7 +893,6 @@ export const downloadStaffExcel = async (
       { wch: 10 }, // pincode
       { wch: 12 }, // date_of_joining
       { wch: 20 }, // qualification
-      { wch: 15 }, // experience_years
       { wch: 20 }, // photo
     ];
     worksheet['!cols'] = wscols;
