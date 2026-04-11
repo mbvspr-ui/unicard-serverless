@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { ArrowLeft, Download, FileText, Image as ImageIcon, Users, Calendar, Building2, FileSpreadsheet } from 'lucide-react';
+import { api } from '@/lib/api';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
 
@@ -172,18 +173,7 @@ export default function BatchDetails() {
   const handleDownloadStaffExcel = async () => {
     setIsDownloadingStaffExcel(true);
     try {
-      const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${API_URL}/api/admin/batches/${id}/staff-excel`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to download staff Excel');
-      }
-
-      const blob = await response.blob();
+      const blob = await api.exportStaffExcel(id);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -192,7 +182,6 @@ export default function BatchDetails() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-
       toast.success('Staff Excel downloaded successfully');
     } catch (error: any) {
       toast.error(error.message || 'Failed to download staff Excel');

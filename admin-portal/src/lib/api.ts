@@ -150,6 +150,21 @@ export const api = {
     return response.blob();
   },
 
+  async exportStaffExcel(batchId: string) {
+    const token = getAuthToken();
+    const response = await fetch(`${API_URL}/api/admin/batches/${batchId}/staff-excel`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to export staff Excel');
+    }
+
+    return response.blob();
+  },
+
   async exportBatchPhotos(batchId: string) {
     const token = getAuthToken();
     const response = await fetch(`${API_URL}/api/admin/batches/${batchId}/photos`, {
