@@ -58,7 +58,7 @@ export const runMigrations = async (): Promise<void> => {
 };
 
 // Run migrations if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
   runMigrations()
     .then(() => {
       console.log('Migration process completed');
