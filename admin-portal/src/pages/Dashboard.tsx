@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Building2, Package, Users, Clock, CheckCircle, XCircle, ArrowRight, RefreshCw, TrendingUp } from 'lucide-react';
+import { Building2, Package, Users, Clock, CheckCircle, ArrowRight, RefreshCw, TrendingUp, Settings } from 'lucide-react';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
 
@@ -363,6 +363,19 @@ export default function Dashboard() {
               <div className="text-left">
                 <p className="font-semibold">Audit Log</p>
                 <p className="text-xs text-muted-foreground">Security and compliance</p>
+              </div>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => navigate('/settings')}
+              className="h-auto py-4 justify-start"
+            >
+              <Settings className="w-5 h-5 mr-3" />
+              <div className="text-left">
+                <p className="font-semibold">System Settings</p>
+                <p className="text-xs text-muted-foreground">Classes and sections</p>
               </div>
             </Button>
           </div>

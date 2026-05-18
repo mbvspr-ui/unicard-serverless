@@ -19,6 +19,15 @@ interface ApiResponse<T> {
   message?: string;
 }
 
+export const DEFAULT_CLASSES = [
+  'Nursery', 'KG', 'KG1', 'KG2', 'LKG', 'UKG',
+  'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
+  'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
+  'Class 11', 'Class 12'
+];
+
+export const DEFAULT_SECTIONS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
 // Helper function to get auth token
 const getAuthToken = (): string | null => {
   return localStorage.getItem('auth_token');
@@ -61,6 +70,28 @@ export const locationApi = {
     const response = await fetch(`${API_URL}/api/locations/districts/${encodeURIComponent(state)}`);
     const data = await response.json();
     return data.success ? data.data : [];
+  },
+};
+
+// System option APIs
+export const systemOptionsApi = {
+  getStudentOptions: async (): Promise<{ classes: string[]; sections: string[] }> => {
+    try {
+      const response = await fetch(`${API_URL}/api/system-options`);
+      const data = await response.json();
+
+      if (!data.success) {
+        return { classes: DEFAULT_CLASSES, sections: DEFAULT_SECTIONS };
+      }
+
+      return {
+        classes: data.data?.classes?.length ? data.data.classes : DEFAULT_CLASSES,
+        sections: data.data?.sections?.length ? data.data.sections : DEFAULT_SECTIONS,
+      };
+    } catch (error) {
+      console.error('Failed to load system options:', error);
+      return { classes: DEFAULT_CLASSES, sections: DEFAULT_SECTIONS };
+    }
   },
 };
 

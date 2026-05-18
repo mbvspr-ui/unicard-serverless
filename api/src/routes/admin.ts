@@ -15,6 +15,12 @@ import {
   getAuditLog,
 } from '../controllers/admin.js';
 import {
+  createSystemOption,
+  deleteSystemOption,
+  getAdminSystemOptions,
+  updateSystemOption,
+} from '../controllers/systemOptions.js';
+import {
   downloadBatchCSV,
   downloadBatchExcel,
   downloadBatchPhotos,
@@ -121,6 +127,34 @@ router.get('/analytics', authenticateAdmin, getAnalytics);
  * @access  Private (Admin)
  */
 router.get('/analytics/staff', authenticateAdmin, getStaffAnalytics);
+
+/**
+ * @route   GET /api/admin/system-options
+ * @desc    Get configurable class and section options
+ * @access  Private (Admin)
+ */
+router.get('/system-options', authenticateAdmin, getAdminSystemOptions);
+
+/**
+ * @route   POST /api/admin/system-options
+ * @desc    Create a configurable class or section option
+ * @access  Private (Admin)
+ */
+router.post('/system-options', authenticateAdmin, createSystemOption);
+
+/**
+ * @route   PUT /api/admin/system-options/:optionId
+ * @desc    Update a configurable class or section option
+ * @access  Private (Admin)
+ */
+router.put('/system-options/:optionId', authenticateAdmin, updateSystemOption);
+
+/**
+ * @route   DELETE /api/admin/system-options/:optionId
+ * @desc    Delete a configurable class or section option
+ * @access  Private (Admin)
+ */
+router.delete('/system-options/:optionId', authenticateAdmin, deleteSystemOption);
 
 /**
  * @route   GET /api/admin/schools/:schoolId/students

@@ -120,6 +120,33 @@ export const api = {
     return fetchWithAuth<any>('/api/admin/analytics/staff');
   },
 
+  async getSystemOptions() {
+    return fetchWithAuth<any>('/api/admin/system-options');
+  },
+
+  async createSystemOption(option_type: 'class' | 'section', value: string) {
+    return fetchWithAuth<any>('/api/admin/system-options', {
+      method: 'POST',
+      body: JSON.stringify({ option_type, value }),
+    });
+  },
+
+  async updateSystemOption(
+    optionId: string,
+    data: { value?: string; sort_order?: number; is_active?: boolean }
+  ) {
+    return fetchWithAuth<any>(`/api/admin/system-options/${optionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteSystemOption(optionId: string) {
+    return fetchWithAuth<any>(`/api/admin/system-options/${optionId}`, {
+      method: 'DELETE',
+    });
+  },
+
   async exportBatchCSV(batchId: string) {
     const token = getAuthToken();
     const response = await fetch(`${API_URL}/api/admin/batches/${batchId}/csv`, {

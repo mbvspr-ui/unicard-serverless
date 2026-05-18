@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { LogOut, User, Clock, Shield } from 'lucide-react';
+import { LogOut, User, Clock, Settings } from 'lucide-react';
 
 export default function Header() {
   const navigate = useNavigate();
@@ -95,6 +95,11 @@ export default function Header() {
                 </p>
               </div>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/settings')}>
+              <Settings className="w-4 h-4 mr-2" />
+              <span>System Settings</span>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             {sessionExpiresAt && (
               <>

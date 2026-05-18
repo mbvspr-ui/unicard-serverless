@@ -16,19 +16,10 @@ import {
 } from '../components/ui/sheet';
 import { BatchSubmissionDialog } from '../components/BatchSubmissionDialog';
 import { Header } from '../components/Header';
-import { studentApi } from '../lib/api';
+import { DEFAULT_CLASSES, DEFAULT_SECTIONS, studentApi, systemOptionsApi } from '../lib/api';
 import { Student } from '../types';
 import { addCacheBuster } from '../utils/photo';
 import { Eye, RefreshCw } from 'lucide-react';
-
-const CLASSES = [
-  'Nursery', 'KG', 'KG1', 'KG2', 'LKG', 'UKG',
-  'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
-  'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-  'Class 11', 'Class 12'
-];
-
-const SECTIONS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 export default function StudentList() {
   const navigate = useNavigate();
@@ -47,6 +38,8 @@ export default function StudentList() {
   const [showDetailsDrawer, setShowDetailsDrawer] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [classOptions, setClassOptions] = useState<string[]>(DEFAULT_CLASSES);
+  const [sectionOptions, setSectionOptions] = useState<string[]>(DEFAULT_SECTIONS);
 
   const limit = 50;
 
@@ -99,6 +92,16 @@ export default function StudentList() {
   useEffect(() => {
     fetchStudents();
   }, [currentPage, searchQuery, classFilter, sectionFilter, refreshKey]);
+
+  useEffect(() => {
+    const loadSystemOptions = async () => {
+      const options = await systemOptionsApi.getStudentOptions();
+      setClassOptions(options.classes);
+      setSectionOptions(options.sections);
+    };
+
+    loadSystemOptions();
+  }, []);
 
   // Refresh data when navigating back to this page
   useEffect(() => {
@@ -249,7 +252,7 @@ export default function StudentList() {
               onValueChange={handleClassFilter}
               options={[
                 { value: 'all', label: 'All Classes' },
-                ...CLASSES.map(c => ({ value: c, label: c }))
+                ...classOptions.map(c => ({ value: c, label: c }))
               ]}
             />
             <FormSelect
@@ -259,7 +262,7 @@ export default function StudentList() {
               onValueChange={handleSectionFilter}
               options={[
                 { value: 'all', label: 'All Sections' },
-                ...SECTIONS.map(s => ({ value: s, label: s }))
+                ...sectionOptions.map(s => ({ value: s, label: s }))
               ]}
             />
             {(classFilter || sectionFilter) && (

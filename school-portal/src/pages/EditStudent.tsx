@@ -17,19 +17,11 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { PhotoEditor } from '../components/PhotoEditor';
-import { studentApi, locationApi } from '../lib/api';
+import { DEFAULT_CLASSES, DEFAULT_SECTIONS, studentApi, locationApi, systemOptionsApi } from '../lib/api';
 import { StudentInput } from '../types';
 import { PlusCircle, Edit2, Trash2 } from 'lucide-react';
 import { addCacheBuster, clearPhotoCache } from '../utils/photo';
 
-const CLASSES = [
-  'Nursery', 'KG', 'KG1', 'KG2', 'LKG', 'UKG',
-  'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
-  'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-  'Class 11', 'Class 12'
-];
-
-const SECTIONS = ['A', 'B', 'C', 'D', 'E', 'F'];
 const GENDERS = ['Male', 'Female', 'Other'];
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
@@ -40,6 +32,8 @@ export default function EditStudent() {
   const [saving, setSaving] = useState(false);
   const [states, setStates] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
+  const [classOptions, setClassOptions] = useState<string[]>(DEFAULT_CLASSES);
+  const [sectionOptions, setSectionOptions] = useState<string[]>(DEFAULT_SECTIONS);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -153,6 +147,16 @@ export default function EditStudent() {
       }
     };
     loadStates();
+  }, []);
+
+  useEffect(() => {
+    const loadSystemOptions = async () => {
+      const options = await systemOptionsApi.getStudentOptions();
+      setClassOptions(options.classes);
+      setSectionOptions(options.sections);
+    };
+
+    loadSystemOptions();
   }, []);
 
   // Load districts when state changes
@@ -759,7 +763,7 @@ export default function EditStudent() {
                         error={errors.class}
                         disabled={!selectedFields.has('class')}
                         placeholder="Select class"
-                        options={CLASSES.map(c => ({ value: c, label: c }))}
+                        options={Array.from(new Set([...classOptions, formData.class].filter(Boolean))).map(c => ({ value: c, label: c }))}
                       />
                     </div>
                   </div>
@@ -780,7 +784,7 @@ export default function EditStudent() {
                         onValueChange={(value) => handleInputChange('section', value)}
                         disabled={!selectedFields.has('section')}
                         placeholder="Select section"
-                        options={SECTIONS.map(s => ({ value: s, label: s }))}
+                        options={Array.from(new Set([...sectionOptions, formData.section].filter(Boolean))).map(s => ({ value: s, label: s }))}
                       />
                     </div>
                   </div>

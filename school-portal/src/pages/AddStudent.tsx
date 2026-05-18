@@ -17,18 +17,9 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { PhotoEditor } from '../components/PhotoEditor';
-import { studentApi, locationApi } from '../lib/api';
+import { DEFAULT_CLASSES, DEFAULT_SECTIONS, studentApi, locationApi, systemOptionsApi } from '../lib/api';
 import { StudentInput } from '../types';
 import { DateInput } from '../components/ui/date-input';
-
-const CLASSES = [
-  'Nursery', 'KG', 'KG1', 'KG2', 'LKG', 'UKG',
-  'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
-  'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-  'Class 11', 'Class 12'
-];
-
-const SECTIONS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 const GENDERS = ['Male', 'Female', 'Other'];
 
@@ -39,6 +30,8 @@ export default function AddStudent() {
   const [loading, setLoading] = useState(false);
   const [states, setStates] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
+  const [classOptions, setClassOptions] = useState<string[]>(DEFAULT_CLASSES);
+  const [sectionOptions, setSectionOptions] = useState<string[]>(DEFAULT_SECTIONS);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -80,6 +73,16 @@ export default function AddStudent() {
       }
     };
     loadStates();
+  }, []);
+
+  useEffect(() => {
+    const loadSystemOptions = async () => {
+      const options = await systemOptionsApi.getStudentOptions();
+      setClassOptions(options.classes);
+      setSectionOptions(options.sections);
+    };
+
+    loadSystemOptions();
   }, []);
 
   // Load districts when state changes
@@ -497,7 +500,7 @@ export default function AddStudent() {
                     onValueChange={(value) => handleInputChange('class', value)}
                     error={errors.class}
                     placeholder="Select class"
-                    options={CLASSES.map(c => ({ value: c, label: c }))}
+                    options={classOptions.map(c => ({ value: c, label: c }))}
                   />
 
                   <FormSelect
@@ -506,7 +509,7 @@ export default function AddStudent() {
                     value={formData.section}
                     onValueChange={(value) => handleInputChange('section', value)}
                     placeholder="Select section"
-                    options={SECTIONS.map(s => ({ value: s, label: s }))}
+                    options={sectionOptions.map(s => ({ value: s, label: s }))}
                   />
                 </div>
 

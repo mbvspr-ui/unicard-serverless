@@ -24,6 +24,7 @@ const SchoolDetails = lazy(() => import('./pages/SchoolDetails'))
 const BatchList = lazy(() => import('./pages/BatchList'))
 const BatchDetails = lazy(() => import('./pages/BatchDetails'))
 const AuditLog = lazy(() => import('./pages/AuditLog'))
+const SystemSettings = lazy(() => import('./pages/SystemSettings'))
 
 // Loading fallback component
 function PageLoader() {
@@ -86,6 +87,11 @@ function AppContent() {
               <Route path="/audit-log" element={
                 <AdminProtectedRoute>
                   <AuditLog />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <AdminProtectedRoute>
+                  <SystemSettings />
                 </AdminProtectedRoute>
               } />
             </Routes>
